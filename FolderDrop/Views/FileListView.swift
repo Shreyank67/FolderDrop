@@ -11,14 +11,16 @@ import SwiftUI
 struct FileListView: View {
     let entries: [FolderEntry]
     let onOpenFile: (FolderEntry) -> Void
+    let onOpenFolder: (FolderEntry) -> Void
 
     var body: some View {
         List(entries) { entry in
             FileRowView(entry: entry)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    // Only files are tappable; folders are display-only for now.
-                    if !entry.isDirectory {
+                    if entry.isDirectory {
+                        onOpenFolder(entry)
+                    } else {
                         onOpenFile(entry)
                     }
                 }

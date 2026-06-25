@@ -9,14 +9,14 @@
 import SwiftUI
 
 struct FolderHeaderView: View {
-    let selectedFolder: URL?
+    let currentFolder: URL?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("FolderDrop")
                 .font(.headline)
 
-            if let folder = selectedFolder {
+            if let folder = currentFolder {
                 Text(folder.lastPathComponent)
                     .font(.body.weight(.medium))
                 Text(folder.path)

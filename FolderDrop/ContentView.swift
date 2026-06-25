@@ -10,15 +10,26 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedFolder: URL?
+    @State private var rootFolder: URL?
+    @State private var currentFolder: URL?
     @State private var folderEntries: [FolderEntry] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            FolderHeaderView(selectedFolder: selectedFolder)
+            FolderHeaderView(currentFolder: currentFolder)
 
-            if selectedFolder != nil {
-                FileListView(entries: folderEntries, onOpenFile: openFile)
+            if currentFolder != nil {
+                if FolderNavigation.canGoBack(root: rootFolder, current: currentFolder) {
+                    Button("Back") {
+                        goBack()
+                    }
+                }
+
+                FileListView(
+                    entries: folderEntries,
+                    onOpenFile: openFile,
+                    onOpenFolder: navigateIntoFolder
+                )
 
                 Button("Change Folder") {
                     selectFolder()
@@ -42,49 +53,47 @@ struct ContentView: View {
 
         panel.begin { response in
             if response == .OK, let url = panel.url {
-                selectedFolder = url
-                loadFolderContents(from: url)
+                rootFolder = url
+                currentFolder = url
+                reloadContents()
             }
         }
     }
 
-    private func loadFolderContents(from folder: URL) {
-        guard folder.startAccessingSecurityScopedResource() else {
+    private func navigateIntoFolder(_ entry: FolderEntry) {
+        currentFolder = entry.url
+        reloadContents()
+    }
+
+    private func goBack() {
+        guard let current = currentFolder else { return }
+        currentFolder = current.deletingLastPathComponent()
+        reloadContents()
+    }
+
+    private func reloadContents() {
+        guard let folder = currentFolder else {
             folderEntries = []
             return
         }
-        defer { folder.stopAccessingSecurityScopedResource() }
+        folderEntries = loadFolderContents(from: folder)
+    }
 
-        do {
-            let urls = try FileManager.default.contentsOfDirectory(
-                at: folder,
-                includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsHiddenFiles]
-            )
+    private func loadFolderContents(from folder: URL) -> [FolderEntry] {
+        // Sandbox access is tied to rootFolder (the URL the user picked in NSOpenPanel).
+        guard let root = rootFolder else { return [] }
+        guard root.startAccessingSecurityScopedResource() else { return [] }
+        defer { root.stopAccessingSecurityScopedResource() }
 
-            let entries = urls.map { url -> FolderEntry in
-                let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-                return FolderEntry(url: url, isDirectory: isDirectory)
-            }
-
-            folderEntries = entries.sorted { lhs, rhs in
-                if lhs.isDirectory != rhs.isDirectory {
-                    return lhs.isDirectory
-                }
-                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
-            }
-        } catch {
-            folderEntries = []
-        }
+        return FolderContentsLoader.load(from: folder)
     }
 
     private func openFile(_ entry: FolderEntry) {
-        guard !entry.isDirectory, let folder = selectedFolder else { return }
+        guard !entry.isDirectory, let root = rootFolder else { return }
 
-        // Re-acquire sandbox access before opening a file inside the user-chosen folder.
-        guard folder.startAccessingSecurityScopedResource() else { return }
+        guard root.startAccessingSecurityScopedResource() else { return }
         NSWorkspace.shared.open(entry.url)
-        folder.stopAccessingSecurityScopedResource()
+        root.stopAccessingSecurityScopedResource()
     }
 }
 
