@@ -8,9 +8,18 @@
 import AppKit
 import SwiftUI
 
+// Identifiable lets SwiftUI track each row in a List. `id` must be unique per item.
+private struct FolderEntry: Identifiable {
+    let url: URL
+    let isDirectory: Bool
+
+    var id: URL { url }
+    var name: String { url.lastPathComponent }
+}
+
 struct ContentView: View {
-    // @State keeps this value alive across view redraws. When it changes, SwiftUI refreshes the UI.
     @State private var selectedFolder: URL?
+    @State private var folderEntries: [FolderEntry] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -24,13 +33,22 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
+
+                List(folderEntries) { entry in
+                    Text(entry.name)
+                }
+                .frame(minHeight: 120, maxHeight: 300)
+
+                Button("Change Folder") {
+                    selectFolder()
+                }
             } else {
                 Text("No folder selected")
                     .foregroundStyle(.secondary)
-            }
 
-            Button("Select Folder") {
-                selectFolder()
+                Button("Select Folder") {
+                    selectFolder()
+                }
             }
         }
         .padding()
@@ -38,18 +56,49 @@ struct ContentView: View {
     }
 
     private func selectFolder() {
-        // NSOpenPanel is AppKit's standard "open file/folder" dialog (Finder-style picker).
         let panel = NSOpenPanel()
-        panel.canChooseFiles = false    // files not selectable
-        panel.canChooseDirectories = true   // folders only
-        panel.allowsMultipleSelection = false  // only one folder at a time
-        panel.prompt = "Select"  // button text "Select"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Select"
 
         panel.begin { response in
-            // `if let` safely unwraps the optional URL — only runs when the user picked a folder.
             if response == .OK, let url = panel.url {
                 selectedFolder = url
+                loadFolderContents(from: url)
             }
+        }
+    }
+
+    private func loadFolderContents(from folder: URL) {
+        // Sandboxed apps need permission to read user-chosen folders.
+        guard folder.startAccessingSecurityScopedResource() else {
+            folderEntries = []
+            return
+        }
+        defer { folder.stopAccessingSecurityScopedResource() }
+
+        do {
+            let urls = try FileManager.default.contentsOfDirectory(
+                at: folder,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )
+
+            let entries = urls.map { url -> FolderEntry in
+                let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                return FolderEntry(url: url, isDirectory: isDirectory)
+            }
+
+            // Folders first, then files; alphabetical within each group.
+            folderEntries = entries.sorted { lhs, rhs in
+                if lhs.isDirectory != rhs.isDirectory {
+                    return lhs.isDirectory
+                }
+                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+        } catch {
+            folderEntries = []
         }
     }
 }
