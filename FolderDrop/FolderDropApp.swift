@@ -10,8 +10,9 @@ import SwiftUI
 @main
 struct FolderDropApp: App {
     var body: some Scene {
-        WindowGroup {
+        MenuBarExtra("FolderDrop", systemImage: "folder") {
             ContentView()
         }
+        .menuBarExtraStyle(.window)
     }
 }
