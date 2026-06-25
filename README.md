@@ -4,7 +4,7 @@ A lightweight macOS menu bar application for quickly accessing files and folders
 
 ## MVP Features
 
-- [ ] Menu bar icon
+- [X] Menu bar icon
 - [ ] Folder picker
 - [ ] File browser
 - [ ] Folder tree
