@@ -2,20 +2,12 @@
 //  ContentView.swift
 //  FolderDrop
 //
-//  Created by Shreyank Patil on 25/06/26.
+//  Root view for the menu bar panel.
+//  Owns @State and coordinates child views — it does not render UI details directly.
 //
 
 import AppKit
 import SwiftUI
-
-// Identifiable lets SwiftUI track each row in a List. `id` must be unique per item.
-private struct FolderEntry: Identifiable {
-    let url: URL
-    let isDirectory: Bool
-
-    var id: URL { url }
-    var name: String { url.lastPathComponent }
-}
 
 struct ContentView: View {
     @State private var selectedFolder: URL?
@@ -23,29 +15,15 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("FolderDrop")
-                .font(.headline)
+            FolderHeaderView(selectedFolder: selectedFolder)
 
-            if let folder = selectedFolder {
-                Text(folder.lastPathComponent)
-                    .font(.body.weight(.medium))
-                Text(folder.path)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-
-                List(folderEntries) { entry in
-                    Text(entry.name)
-                }
-                .frame(minHeight: 120, maxHeight: 300)
+            if selectedFolder != nil {
+                FileListView(entries: folderEntries, onOpenFile: openFile)
 
                 Button("Change Folder") {
                     selectFolder()
                 }
             } else {
-                Text("No folder selected")
-                    .foregroundStyle(.secondary)
-
                 Button("Select Folder") {
                     selectFolder()
                 }
@@ -71,7 +49,6 @@ struct ContentView: View {
     }
 
     private func loadFolderContents(from folder: URL) {
-        // Sandboxed apps need permission to read user-chosen folders.
         guard folder.startAccessingSecurityScopedResource() else {
             folderEntries = []
             return
@@ -90,7 +67,6 @@ struct ContentView: View {
                 return FolderEntry(url: url, isDirectory: isDirectory)
             }
 
-            // Folders first, then files; alphabetical within each group.
             folderEntries = entries.sorted { lhs, rhs in
                 if lhs.isDirectory != rhs.isDirectory {
                     return lhs.isDirectory
@@ -100,6 +76,15 @@ struct ContentView: View {
         } catch {
             folderEntries = []
         }
+    }
+
+    private func openFile(_ entry: FolderEntry) {
+        guard !entry.isDirectory, let folder = selectedFolder else { return }
+
+        // Re-acquire sandbox access before opening a file inside the user-chosen folder.
+        guard folder.startAccessingSecurityScopedResource() else { return }
+        NSWorkspace.shared.open(entry.url)
+        folder.stopAccessingSecurityScopedResource()
     }
 }
 
