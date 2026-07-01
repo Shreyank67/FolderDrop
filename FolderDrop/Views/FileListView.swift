@@ -10,21 +10,35 @@ import SwiftUI
 
 struct FileListView: View {
     let entries: [FolderEntry]
+    var isRootList: Bool = false
     let onOpenFile: (FolderEntry) -> Void
     let onOpenFolder: (FolderEntry) -> Void
+    var onReveal: (FolderEntry) -> Void = { _ in }
+    var onRequestRemove: (FolderEntry) -> Void = { _ in }
 
     var body: some View {
         List(entries) { entry in
-            FileRowView(entry: entry)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if entry.isDirectory {
-                        onOpenFolder(entry)
-                    } else {
-                        onOpenFile(entry)
-                    }
+            Group {
+                if isRootList {
+                    RootFolderRow(
+                        entry: entry,
+                        onOpen: onOpenFolder,
+                        onReveal: onReveal,
+                        onRequestRemove: onRequestRemove
+                    )
+                } else {
+                    FileRowView(entry: entry)
                 }
-                .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if entry.isDirectory {
+                    onOpenFolder(entry)
+                } else {
+                    onOpenFile(entry)
+                }
+            }
+            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
         .listStyle(.plain)
         .frame(minHeight: 260, maxHeight: 380)

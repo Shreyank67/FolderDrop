@@ -70,6 +70,24 @@ enum FolderPersistence {
         return resolvedURLs
     }
 
+    /// Removes the bookmark matching the given folder, if one exists.
+    static func remove(_ url: URL) {
+        let target = url.standardizedFileURL
+        let remaining = loadBookmarks().filter { bookmark in
+            var isStale = false
+            guard let resolved = try? URL(
+                resolvingBookmarkData: bookmark,
+                options: .withSecurityScope,
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            ) else {
+                return false
+            }
+            return resolved.standardizedFileURL != target
+        }
+        saveBookmarks(remaining)
+    }
+
     private static func loadBookmarks() -> [Data] {
         UserDefaults.standard.array(forKey: bookmarksKey) as? [Data] ?? []
     }

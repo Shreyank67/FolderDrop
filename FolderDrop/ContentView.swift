@@ -29,8 +29,11 @@ struct ContentView: View {
 
                     FileListView(
                         entries: folderEntries,
+                        isRootList: currentFolder == nil,
                         onOpenFile: openFile,
-                        onOpenFolder: navigateIntoFolder
+                        onOpenFolder: navigateIntoFolder,
+                        onReveal: revealInFinder,
+                        onRequestRemove: requestRemoval
                     )
 
                     Button("Add Folder") {
@@ -119,6 +122,42 @@ struct ContentView: View {
         guard root.startAccessingSecurityScopedResource() else { return }
         NSWorkspace.shared.open(entry.url)
         root.stopAccessingSecurityScopedResource()
+    }
+
+    private func revealInFinder(_ entry: FolderEntry) {
+        guard entry.url.startAccessingSecurityScopedResource() else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([entry.url])
+        entry.url.stopAccessingSecurityScopedResource()
+    }
+
+    // NSAlert.runModal() is used instead of SwiftUI's .confirmationDialog because the dialog's
+    // window sits outside MenuBarExtra's own panel bounds. That panel dismisses itself on any
+    // click it sees as "outside," which raced with and swallowed the dialog button's tap before
+    // the SwiftUI action closure could run. NSAlert resolves its button click inside its own
+    // modal session before returning, so the removal is guaranteed to fire.
+    private func requestRemoval(of entry: FolderEntry) {
+        let alert = NSAlert()
+        alert.messageText = "Remove \"\(entry.name)\" from FolderDrop?"
+        alert.informativeText = "This only removes the shortcut from FolderDrop.\nThe folder and its contents will remain on your Mac."
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            removeRootFolder(entry)
+        }
+    }
+
+    private func removeRootFolder(_ entry: FolderEntry) {
+        let url = entry.url
+        FolderPersistence.remove(url)
+        rootFolders.removeAll { $0.standardizedFileURL == url.standardizedFileURL }
+
+        if currentRoot?.standardizedFileURL == url.standardizedFileURL {
+            currentRoot = nil
+            currentFolder = nil
+        }
+
+        reloadContents()
     }
 }
 
