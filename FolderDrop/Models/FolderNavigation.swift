@@ -9,9 +9,9 @@
 import Foundation
 
 enum FolderNavigation {
-    /// True when the user has navigated into a subfolder below their originally chosen folder.
-    static func canGoBack(root: URL?, current: URL?) -> Bool {
-        guard let root, let current else { return false }
-        return current != root
+    /// True when there's somewhere to go back to — either up a level inside a root folder,
+    /// or back to the top-level list of root folders.
+    static func canGoBack(current: URL?) -> Bool {
+        current != nil
     }
 }

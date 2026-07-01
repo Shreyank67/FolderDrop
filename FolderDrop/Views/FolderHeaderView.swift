@@ -10,6 +10,7 @@ import SwiftUI
 
 struct FolderHeaderView: View {
     let currentFolder: URL?
+    let rootFolderCount: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -29,6 +30,10 @@ struct FolderHeaderView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
+            } else if rootFolderCount > 0 {
+                Text(rootFolderCount == 1 ? "1 Root Folder" : "\(rootFolderCount) Root Folders")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             } else {
                 Text("No folder selected")
                     .foregroundStyle(.secondary)
