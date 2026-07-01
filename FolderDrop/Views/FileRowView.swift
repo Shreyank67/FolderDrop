@@ -12,6 +12,12 @@ struct FileRowView: View {
     let entry: FolderEntry
 
     var body: some View {
-        Text(entry.name)
+        HStack {
+            Image(nsImage: FileIconProvider.icon(for: entry.url))
+                .resizable()
+                .frame(width: 16, height: 16)
+
+            Text(entry.name)
+        }
     }
 }
