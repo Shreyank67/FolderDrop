@@ -24,7 +24,9 @@ struct FileListView: View {
                         onOpenFile(entry)
                     }
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
-        .frame(minHeight: 120, maxHeight: 300)
+        .listStyle(.plain)
+        .frame(minHeight: 260, maxHeight: 380)
     }
 }

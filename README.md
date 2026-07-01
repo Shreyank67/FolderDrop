@@ -119,76 +119,148 @@ Display the contents of the selected folder.
 - Alphabetical sorting
 - Scrollable list
 
+---
+
+### ✅ Folder Navigation
+
+- Navigate into subfolders
+- Navigate back to parent folders
+- Root folder remains unchanged
+- Change Folder resets navigation
+
+---
+
+### ✅ Open Files
+
+Clicking a file opens it using the default macOS application.
+
+Examples:
+
+- PDF → Preview
+- PNG → Preview
+- SVG → Affinity Designer (or system default)
+- Text → TextEdit
+- ZIP → Archive Utility
+
+---
+
+### ✅ Native macOS File Icons
+
+Uses Finder's native file and folder icons through `NSWorkspace`.
+
+The application automatically displays the correct icon for:
+
+- Folders
+- Documents
+- Images
+- Archives
+- Applications
+- Any registered macOS file type
+
+---
+
+### ✅ UI Improvements
+
+Recent UI polish includes:
+
+- Native folder icon in the header
+- Compact Finder-style parent path
+- Improved typography hierarchy
+- Better row spacing
+- Reduced list indentation
+- Larger scrolling area
+- Improved overall spacing and alignment
+
+---
 -------------------------------------   *   *   *   -------------------------------- 
 
-# Upcoming Features
+## Roadmap
 
-## Phase 2 — File Actions
+### ✅ Phase 1 — Foundation
 
-- [ ] Open files
-- [ ] Reveal in Finder
-- [ ] Display file icons
-
----
-
-## Phase 3 — Drag & Drop
-
-- [ ] Drag files into any application
-- [ ] Drag folders
-- [ ] Multi-file drag
+- [x] Menu Bar Application
+- [x] Folder Picker
+- [x] Folder Browser
+- [x] Folder Navigation
+- [x] Open Files
+- [x] Native File Icons
+- [x] UI Polish
 
 ---
 
-## Phase 4 — Persistence
+### 🚧 Phase 2 — Core Features
 
-- [ ] Remember selected folders
-- [ ] Security scoped bookmarks
+- [ ] Folder Persistence
+- [ ] Drag & Drop Support
+- [ ] Reveal File in Finder
+- [ ] Context Menu
 
 ---
 
-## Phase 5 — Productivity
+### 📅 Phase 3 — Productivity
 
 - [ ] Search
 - [ ] Favorites
-- [ ] Recent files
-- [ ] Multiple folders
+- [ ] Recent Folders
+- [ ] Keyboard Shortcuts
+- [ ] Quick Look Preview
 
 ---
 
-## Phase 6 — Polish
+### ✨ Phase 4 — Polish
 
-- [ ] Startup at login
-- [ ] Settings
-- [ ] Keyboard shortcuts
-- [ ] Quick Look preview
-- [ ] Context menu
+- [ ] Launch at Login
+- [ ] Settings Window
+- [ ] Multiple Folder Support
+- [ ] Performance Improvements
+- [ ] Accessibility Improvements
+
+---
+
+## Technologies
+
+- Swift
+- SwiftUI
+- AppKit
+- NSWorkspace
+- NSOpenPanel
+- FileManager
+- Xcode
+- Git
+- GitHub
+
 
 -------------------------------------   *   *   *   -------------------------------- 
 
-# Planned Architecture
+## Project Structure
 
 ```
-FolderDrop
-
-├── App
-│   └── MenuBarExtra
-
-├── Views
-│   ├── ContentView
-│   ├── FolderListView
-│   ├── FileRowView
-│   └── SettingsView
-
-├── Models
-│   ├── FolderEntry
-│   └── FolderModel
-
-├── Services
-│   ├── FolderPicker
-│   ├── FileManager
-│   ├── BookmarkManager
-│   └── DragManager
+FolderDrop/
+│
+├── FolderDropApp.swift
+├── ContentView.swift
+│
+├── Models/
+│   ├── FolderEntry.swift
+│   └── FolderNavigation.swift
+│
+├── Services/
+│   ├── FolderContentsLoader.swift
+│   └── FileIconProvider.swift
+│
+└── Views/
+    ├── FolderHeaderView.swift
+    ├── FileListView.swift
+    └── FileRowView.swift
 ```
+The project follows a simple separation of responsibilities.
+
+- **Models** → Application data
+- **Views** → UI components
+- **Services** → macOS APIs and file system operations
+- **ContentView** → Coordinates state and user interactions
+
+---
 
 -------------------------------------   *   *   *   -------------------------------- 
 
@@ -201,3 +273,10 @@ FolderDrop
 - Learned Git + GitHub workflow
 - Implemented folder picker
 - Implemented folder browser
+
+
+### 2026-07-01
+
+- changed workflow (ChatGPT, Claude Code, VS Code)
+- Added new features
+- Made UI improvements

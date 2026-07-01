@@ -15,24 +15,26 @@ struct ContentView: View {
     @State private var folderEntries: [FolderEntry] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             FolderHeaderView(currentFolder: currentFolder)
 
             if currentFolder != nil {
-                if FolderNavigation.canGoBack(root: rootFolder, current: currentFolder) {
-                    Button("Back") {
-                        goBack()
+                VStack(alignment: .leading, spacing: 10) {
+                    if FolderNavigation.canGoBack(root: rootFolder, current: currentFolder) {
+                        Button("Back") {
+                            goBack()
+                        }
                     }
-                }
 
-                FileListView(
-                    entries: folderEntries,
-                    onOpenFile: openFile,
-                    onOpenFolder: navigateIntoFolder
-                )
+                    FileListView(
+                        entries: folderEntries,
+                        onOpenFile: openFile,
+                        onOpenFolder: navigateIntoFolder
+                    )
 
-                Button("Change Folder") {
-                    selectFolder()
+                    Button("Change Folder") {
+                        selectFolder()
+                    }
                 }
             } else {
                 Button("Select Folder") {
@@ -40,7 +42,8 @@ struct ContentView: View {
                 }
             }
         }
-        .padding()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
         .frame(minWidth: 280)
     }
 
