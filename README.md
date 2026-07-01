@@ -172,6 +172,16 @@ Recent UI polish includes:
 - Improved overall spacing and alignment
 
 ---
+
+### ✅ Root Folder Management
+- Add multiple root folders
+- Persist folders using security-scoped bookmarks
+- Restore folders on launch
+- Prevent duplicate folders
+- Remove root folders
+- Native context menu
+- Reveal root folder in Finder
+
 -------------------------------------   *   *   *   -------------------------------- 
 
 ## Roadmap
@@ -190,10 +200,10 @@ Recent UI polish includes:
 
 ### 🚧 Phase 2 — Core Features
 
-- [ ] Folder Persistence
+- [X] Folder Persistence
 - [ ] Drag & Drop Support
-- [ ] Reveal File in Finder
-- [ ] Context Menu
+- [X] Reveal File in Finder
+- [X] Context Menu
 
 ---
 
@@ -261,6 +271,50 @@ The project follows a simple separation of responsibilities.
 - **ContentView** → Coordinates state and user interactions
 
 ---
+
+## Current Architecture (Mental Model)
+
+MenuBarExtra
+        │
+        ▼
+   ContentView
+        │
+        ├──────────────┐
+        │              │
+        ▼              ▼
+ Folder UI      Navigation
+        │
+        ▼
+ FolderContentsLoader
+        │
+        ▼
+ FileManager
+
+
+## Supporting services:
+
+FolderPersistence
+
+↓
+
+Security Bookmarks
+
+↓
+
+UserDefaults
+
+
+## Supporting views:
+
+FileListView
+
+↓
+
+RootFolderRow
+
+↓
+
+FileRowView
 
 -------------------------------------   *   *   *   -------------------------------- 
 
