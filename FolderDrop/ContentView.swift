@@ -45,6 +45,30 @@ struct ContentView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 14)
         .frame(minWidth: 280)
+        .onAppear {
+            restoreRootFolder()
+        }
+    }
+
+    private func restoreRootFolder() {
+        guard rootFolder == nil else { return }
+        guard let folder = FolderPersistence.restore() else { return }
+
+        guard folder.startAccessingSecurityScopedResource() else {
+            FolderPersistence.clear()
+            return
+        }
+        let folderExists = FileManager.default.fileExists(atPath: folder.path)
+        folder.stopAccessingSecurityScopedResource()
+
+        guard folderExists else {
+            FolderPersistence.clear()
+            return
+        }
+
+        rootFolder = folder
+        currentFolder = folder
+        reloadContents()
     }
 
     private func selectFolder() {
@@ -56,6 +80,7 @@ struct ContentView: View {
 
         panel.begin { response in
             if response == .OK, let url = panel.url {
+                FolderPersistence.save(url)
                 rootFolder = url
                 currentFolder = url
                 reloadContents()
