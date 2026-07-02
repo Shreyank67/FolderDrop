@@ -1,6 +1,6 @@
-//
+   //
 //  EmptyStateView.swift
-//  FolderDrop
+//   FolderDrop
 //
 //  A small, reusable placeholder for "nothing to show here" screens.
 //  Pure display component — it receives data and does not own any @State.

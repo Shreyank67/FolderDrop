@@ -19,6 +19,12 @@ struct ContentView: View {
     /// starts from when nothing is active yet — never written from selectionState.
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
+    /// The exact NSWindow hosting this ContentView instance, resolved via
+    /// WindowAccessor below. Deterministic because it's read directly off a
+    /// view inside our own hierarchy, not searched for among NSApp.windows —
+    /// so it can never resolve to Settings/About/any other auxiliary window.
+    /// Used solely to restore key status after Quick Look closes.
+    @State private var menuBarWindow: NSWindow?
     @AppStorage(SettingsKeys.quickLookEnabled) private var isQuickLookEnabled = true
     @AppStorage(SettingsKeys.restoresLastOpenedFolder) private var restoresLastOpenedFolder = false
     @AppStorage(SettingsKeys.lastOpenedFolderPath) private var lastOpenedFolderPath: String?
@@ -107,6 +113,7 @@ struct ContentView: View {
         .padding(.horizontal, 15)
         .padding(.vertical, 14)
         .frame(minWidth: 304)
+        .background(WindowAccessor { menuBarWindow = $0 })
         .onAppear {
             restoreRootFolders()
             installKeyboardShortcutsMonitor()
@@ -139,6 +146,11 @@ struct ContentView: View {
         }
 
         Self.keyboardShortcutsMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // DEBUG-INSTRUMENTATION: every keyDown that reaches this monitor.
+            #if DEBUG
+            FocusDebugLog.key("reached monitor: keyCode=\(event.keyCode) modifierFlags=\(event.modifierFlags.rawValue)")
+            #endif
+
             let isExtending = event.modifierFlags.contains(.shift)
 
             switch event.keyCode {
@@ -164,12 +176,45 @@ struct ContentView: View {
                 break
             }
 
-            guard let entry = selectionState.activeEntry else { return event }
+            guard let entry = selectionState.activeEntry else {
+                #if DEBUG
+                if event.keyCode == 49 {
+                    FocusDebugLog.key("Space received but no active entry -> returning event (passthrough)")
+                }
+                #endif
+                return event
+            }
 
             switch event.keyCode {
             case 49: // Space
-                guard !entry.isDirectory, isQuickLookEnabled else { return event }
+                // DEBUG-INSTRUMENTATION: full trace of Space handling, since this is
+                // the key implicated in the Quick Look focus-chain investigation.
+                #if DEBUG
+                FocusDebugLog.key("Space received: keyCode=49 modifierFlags=\(event.modifierFlags.rawValue) entry=\(entry.url.lastPathComponent) isDirectory=\(entry.isDirectory) isQuickLookEnabled=\(isQuickLookEnabled)")
+                FocusDebugLog.appStateSnapshot(context: "before Space handling")
+                #endif
+                guard !entry.isDirectory, isQuickLookEnabled else {
+                    #if DEBUG
+                    FocusDebugLog.key("Space: guard failed (isDirectory or QuickLook disabled) -> returning event (passthrough)")
+                    #endif
+                    return event
+                }
+                let wasShowingBeforeToggle = quickLookService.isShowing
                 quickLookService.toggle(entries: previewEntries(for: entry), activeEntry: entry, root: currentRoot)
+                #if DEBUG
+                FocusDebugLog.key("Space: quickLookService.toggle() called -> returning nil (consumed)")
+                FocusDebugLog.appStateSnapshot(context: "after Space handling")
+                #endif
+                // MenuBarExtra's backing window is a non-activating auxiliary panel:
+                // AppKit does not automatically hand key status back to it once
+                // QLPreviewPanel (a real activating window) takes and then relinquishes
+                // it. Restore it explicitly the moment we know Quick Look just closed.
+                if wasShowingBeforeToggle && !quickLookService.isShowing {
+                    menuBarWindow?.makeKeyAndOrderFront(nil)
+                    #if DEBUG
+                    FocusDebugLog.logWindowHierarchy(context: "immediately after Quick Look closed (before any mouse interaction)")
+                    #endif
+                }
                 return nil
             case 36, 76: // Return, keypad Enter
                 if entry.isDirectory {
@@ -376,6 +421,27 @@ struct ContentView: View {
         }
 
         reloadContents()
+    }
+}
+
+/// Resolves the exact NSWindow hosting the view it's attached to. MenuBarExtra
+/// exposes no SwiftUI-level API for its backing window, so this bridges to
+/// AppKit for the one property (NSView.window) that answers it deterministically:
+/// it's read directly off a view inside our own hierarchy, not searched for
+/// among NSApp.windows, so it can never resolve to Settings/About/any other
+/// window even as the app grows more of them. Deferred one runloop tick since
+/// the view isn't attached to its window yet at makeNSView/updateNSView time.
+private struct WindowAccessor: NSViewRepresentable {
+    let onResolve: (NSWindow?) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onResolve(view.window) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { onResolve(nsView.window) }
     }
 }
 

@@ -9,6 +9,13 @@ import SwiftUI
 
 @main
 struct FolderDropApp: App {
+    init() {
+        // DEBUG-INSTRUMENTATION: temporary focus/responder-chain investigation (R0.1).
+        #if DEBUG
+        FocusDebugObserver.shared.start()
+        #endif
+    }
+
     var body: some Scene {
         MenuBarExtra("FolderDrop", systemImage: "folder") {
             ContentView()
