@@ -34,7 +34,7 @@ struct FileRowView: View {
     @State private var isHovering = false
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Image(nsImage: FileIconProvider.icon(for: entry.url))
                 .resizable()
                 .frame(width: 16, height: 16)
@@ -43,13 +43,13 @@ struct FileRowView: View {
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 4)
+        .padding(.vertical, 7)
+        .padding(.horizontal, 10)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(highlightColor)
         )
-        .animation(.easeInOut(duration: 0.16), value: isHovering)
+        .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in
             isHovering = hovering
             onHoverChange(hovering)
@@ -65,13 +65,14 @@ struct FileRowView: View {
     }
 
     /// Selection keeps the same emphasized color AppKit gives a selected, key-window
-    /// list row. Hover uses a light system-accent-color tint instead of gray, so it
-    /// still reads as "not yet selected" rather than competing with selection.
+    /// list row. Hover uses the same neutral gray AppKit gives a selected row when
+    /// the window isn't key — a subtle, native "not yet selected" cue that reads
+    /// clearly differently from the accent-colored selection state.
     private var highlightColor: Color {
         if isSelected {
             return Color(nsColor: .selectedContentBackgroundColor)
         } else if isHovering {
-            return Color(nsColor: .controlAccentColor).opacity(0.12)
+            return Color(nsColor: .unemphasizedSelectedContentBackgroundColor)
         } else {
             return .clear
         }

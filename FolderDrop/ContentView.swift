@@ -28,53 +28,82 @@ struct ContentView: View {
     private static var keyboardShortcutsMonitor: Any?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 20) {
             FolderHeaderView(currentFolder: currentFolder, rootFolderCount: rootFolders.count)
 
             if currentFolder != nil || !rootFolders.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     if FolderNavigation.canGoBack(current: currentFolder) {
-                        Button("Back") {
-                            goBack()
-                        }
+                        BackButton(action: goBack)
                     }
 
-                    FileListView(
-                        entries: folderEntries,
-                        isRootList: currentFolder == nil,
-                        root: currentRoot,
-                        selectedEntries: selectionState.selectedEntries,
-                        activeEntry: selectionState.activeEntry,
-                        onOpenFile: openFile,
-                        onOpenFolder: navigateIntoFolder,
-                        onReveal: revealInFinder,
-                        onRequestRemove: requestRemoval,
-                        onSelect: { selectionState.selectOnly($0) },
-                        onCommandSelect: { selectionState.toggle($0) },
-                        onShiftSelect: { selectionState.selectRange(to: $0, in: folderEntries) },
-                        onHover: { entry, isHovering in
-                            if isHovering {
-                                hoveredEntry = entry
-                            } else if hoveredEntry == entry {
-                                hoveredEntry = nil
-                            }
-                        },
-                        onDeselectAll: deselectAll
-                    )
+                    if currentFolder != nil && folderEntries.isEmpty {
+                        EmptyStateView(
+                            systemImage: "tray",
+                            title: "This folder is empty",
+                            subtitle: "Files added here will appear automatically."
+                        )
+                        .frame(minHeight: 260, maxHeight: 380)
+                        .transition(.opacity)
+                    } else {
+                        FileListView(
+                            entries: folderEntries,
+                            isRootList: currentFolder == nil,
+                            root: currentRoot,
+                            selectedEntries: selectionState.selectedEntries,
+                            activeEntry: selectionState.activeEntry,
+                            onOpenFile: openFile,
+                            onOpenFolder: navigateIntoFolder,
+                            onReveal: revealInFinder,
+                            onRequestRemove: requestRemoval,
+                            onSelect: { selectionState.selectOnly($0) },
+                            onCommandSelect: { selectionState.toggle($0) },
+                            onShiftSelect: { selectionState.selectRange(to: $0, in: folderEntries) },
+                            onHover: { entry, isHovering in
+                                if isHovering {
+                                    hoveredEntry = entry
+                                } else if hoveredEntry == entry {
+                                    hoveredEntry = nil
+                                }
+                            },
+                            onDeselectAll: deselectAll
+                        )
+                        .transition(.opacity)
+                    }
 
-                    Button("Add Folder") {
+                    Button {
                         selectFolder()
+                    } label: {
+                        Label("Add Folder", systemImage: "folder.badge.plus")
                     }
+                    .buttonStyle(.borderless)
+                    .controlSize(.small)
+                    .padding(.top, 8)
                 }
             } else {
-                Button("Add Folder") {
-                    selectFolder()
+                VStack(spacing: 10) {
+                    EmptyStateView(
+                        systemImage: "folder.badge.plus",
+                        title: "No folders added yet",
+                        subtitle: "Add a folder to start browsing its files here."
+                    )
+
+                    Button {
+                        selectFolder()
+                    } label: {
+                        Label("Add Folder", systemImage: "folder.badge.plus")
+                    }
+                    .buttonStyle(.borderless)
+                    .controlSize(.small)
                 }
+                .transition(.opacity)
             }
         }
-        .padding(.horizontal, 12)
+        .animation(.easeInOut(duration: 0.2), value: currentFolder)
+        .animation(.easeInOut(duration: 0.2), value: rootFolders.isEmpty)
+        .padding(.horizontal, 15)
         .padding(.vertical, 14)
-        .frame(minWidth: 280)
+        .frame(minWidth: 304)
         .onAppear {
             restoreRootFolders()
             installKeyboardShortcutsMonitor()
@@ -312,6 +341,28 @@ struct ContentView: View {
         }
 
         reloadContents()
+    }
+}
+
+/// A lightweight, Finder-style back affordance: no permanent border or fill, just
+/// a chevron + label that brightens on hover. .buttonStyle(.plain) strips all of
+/// AppKit's default button chrome so the only feedback is the color change below —
+/// deliberately not a bordered/rounded push button.
+private struct BackButton: View {
+    let action: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                Text("Back")
+            }
+            .font(.callout)
+            .foregroundStyle(isHovering ? Color(nsColor: .labelColor) : Color(nsColor: .secondaryLabelColor))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
     }
 }
 

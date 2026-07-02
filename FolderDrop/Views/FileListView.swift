@@ -77,9 +77,11 @@ struct FileListView: View {
                         onSelect(entry)
                     }
                 }
-                .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 6))
+                .listRowSeparator(.hidden)
             }
             .listStyle(.plain)
+            .contentMargins(.leading, 0, for: .scrollContent)
             .frame(minHeight: 260, maxHeight: 380)
             .background(
                 // Sits behind the List; only reachable by clicks that land on truly
