@@ -27,6 +27,9 @@ struct FileListView: View {
     var onCommandSelect: (FolderEntry) -> Void = { _ in }
     var onShiftSelect: (FolderEntry) -> Void = { _ in }
     var onHover: (FolderEntry, Bool) -> Void = { _, _ in }
+    /// Fired by a click that lands on empty list whitespace (below the last row),
+    /// not on any row itself.
+    var onDeselectAll: () -> Void = {}
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -78,6 +81,14 @@ struct FileListView: View {
             }
             .listStyle(.plain)
             .frame(minHeight: 260, maxHeight: 380)
+            .background(
+                // Sits behind the List; only reachable by clicks that land on truly
+                // empty space below the last row, since rows themselves are opaque
+                // to hit-testing and handle their own taps above.
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { onDeselectAll() }
+            )
             .onChange(of: activeEntry) { _, newEntry in
                 guard let newEntry else { return }
                 withAnimation {

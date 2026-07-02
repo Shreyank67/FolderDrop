@@ -58,7 +58,8 @@ struct ContentView: View {
                             } else if hoveredEntry == entry {
                                 hoveredEntry = nil
                             }
-                        }
+                        },
+                        onDeselectAll: deselectAll
                     )
 
                     Button("Add Folder") {
@@ -83,11 +84,11 @@ struct ContentView: View {
         }
         .onChange(of: selectionState.activeEntry) { _, newEntry in
             guard quickLookService.isShowing else { return }
-            if let newEntry, !newEntry.isDirectory {
-                quickLookService.show(entry: newEntry, root: currentRoot)
-            } else {
+            guard let newEntry, !newEntry.isDirectory else {
                 quickLookService.close()
+                return
             }
+            quickLookService.show(entries: previewEntries(for: newEntry), activeEntry: newEntry, root: currentRoot)
         }
     }
 
@@ -120,6 +121,13 @@ struct ContentView: View {
                 guard FolderNavigation.canGoBack(current: currentFolder) else { return event }
                 goBack()
                 return nil
+            case 0 where event.modifierFlags.contains(.command): // ⌘A / ⌘⇧A
+                if event.modifierFlags.contains(.shift) {
+                    deselectAll()
+                } else {
+                    selectAll()
+                }
+                return nil
             default:
                 break
             }
@@ -129,7 +137,7 @@ struct ContentView: View {
             switch event.keyCode {
             case 49: // Space
                 guard !entry.isDirectory else { return event }
-                quickLookService.toggle(entry: entry, root: currentRoot)
+                quickLookService.toggle(entries: previewEntries(for: entry), activeEntry: entry, root: currentRoot)
                 return nil
             case 36, 76: // Return, keypad Enter
                 if entry.isDirectory {
@@ -169,6 +177,32 @@ struct ContentView: View {
         }
 
         selectionState.moveActive(by: offset, in: folderEntries, extending: extending)
+    }
+
+    /// Space should preview just the active file when it's the only one selected,
+    /// or the whole selection (in on-screen order) when there's more than one —
+    /// the active file is still what Quick Look initially displays either way.
+    private func previewEntries(for activeEntry: FolderEntry) -> [FolderEntry] {
+        let selected = folderEntries.filter { selectionState.selectedEntries.contains($0) }
+        return selected.count > 1 ? selected : [activeEntry]
+    }
+
+    /// ⌘A: select every file in the current folder (folders themselves never take
+    /// part in selection, consistent with click/⌘-click/⇧-click elsewhere). Reuses
+    /// SelectionState's existing toggle(_:) from a cleared state rather than adding
+    /// a dedicated method, so activeEntry/selectionAnchor end up on the last file —
+    /// keyboard navigation continues normally from there afterward.
+    private func selectAll() {
+        selectionState.clear()
+        for entry in folderEntries where !entry.isDirectory {
+            selectionState.toggle(entry)
+        }
+    }
+
+    /// ⌘⇧A and whitespace clicks: clear the selection and close Quick Look if open.
+    private func deselectAll() {
+        selectionState.clear()
+        quickLookService.close()
     }
 
     private func restoreRootFolders() {
