@@ -28,7 +28,6 @@ struct FileListView: View {
                 if isRootList {
                     RootFolderRow(
                         entry: entry,
-                        isSelected: selectedEntry?.id == entry.id,
                         onOpen: onOpenFolder,
                         onReveal: onReveal,
                         onRequestRemove: onRequestRemove
@@ -39,11 +38,13 @@ struct FileListView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                onSelect(entry)
+                // A single, uncounted tap: no competing double-tap gesture means
+                // SwiftUI never has to hold the click to disambiguate, so this fires
+                // immediately. Folders navigate instantly; files just select.
                 if entry.isDirectory {
                     onOpenFolder(entry)
                 } else {
-                    onOpenFile(entry)
+                    onSelect(entry)
                 }
             }
             .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))

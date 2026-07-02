@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var currentFolder: URL?
     @State private var folderEntries: [FolderEntry] = []
     @State private var selectedEntry: FolderEntry?
+    @State private var quickLookService = QuickLookService()
+    @State private var quickLookKeyMonitor: Any?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -55,7 +57,49 @@ struct ContentView: View {
         .frame(minWidth: 280)
         .onAppear {
             restoreRootFolders()
+            installQuickLookMonitor()
         }
+        .onDisappear {
+            removeQuickLookMonitor()
+        }
+        .onChange(of: selectedEntry) { _, newEntry in
+            guard quickLookService.isShowing else { return }
+            if let newEntry, !newEntry.isDirectory {
+                quickLookService.show(entry: newEntry, root: currentRoot)
+            } else {
+                quickLookService.close()
+            }
+        }
+    }
+
+    /// Space toggles Quick Look and Enter opens the selected file, both scoped to
+    /// selectedEntry; every other key (and Enter/Space on a folder) passes through
+    /// untouched so List navigation, buttons, etc. keep working as before.
+    /// Escape isn't handled here — QLPreviewPanel is a real NSPanel that already
+    /// closes itself on Escape natively.
+    private func installQuickLookMonitor() {
+        guard quickLookKeyMonitor == nil else { return }
+        quickLookKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard let entry = selectedEntry, !entry.isDirectory else { return event }
+
+            switch event.keyCode {
+            case 49: // Space
+                quickLookService.toggle(entry: entry, root: currentRoot)
+                return nil
+            case 36, 76: // Return, keypad Enter
+                openFile(entry)
+                return nil
+            default:
+                return event
+            }
+        }
+    }
+
+    private func removeQuickLookMonitor() {
+        if let quickLookKeyMonitor {
+            NSEvent.removeMonitor(quickLookKeyMonitor)
+        }
+        quickLookKeyMonitor = nil
     }
 
     private func restoreRootFolders() {
