@@ -15,8 +15,11 @@ struct ContentView: View {
     @State private var currentFolder: URL?
     @State private var folderEntries: [FolderEntry] = []
     @State private var selectedEntry: FolderEntry?
+    /// Only ever read once, inside moveSelection, to seed where keyboard navigation
+    /// starts from when nothing is selected yet — never written from selectedEntry.
+    @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
-    @State private var quickLookKeyMonitor: Any?
+    @State private var keyboardShortcutsMonitor: Any?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -39,7 +42,14 @@ struct ContentView: View {
                         onOpenFolder: navigateIntoFolder,
                         onReveal: revealInFinder,
                         onRequestRemove: requestRemoval,
-                        onSelect: { selectedEntry = $0 }
+                        onSelect: { selectedEntry = $0 },
+                        onHover: { entry, isHovering in
+                            if isHovering {
+                                hoveredEntry = entry
+                            } else if hoveredEntry == entry {
+                                hoveredEntry = nil
+                            }
+                        }
                     )
 
                     Button("Add Folder") {
@@ -57,10 +67,10 @@ struct ContentView: View {
         .frame(minWidth: 280)
         .onAppear {
             restoreRootFolders()
-            installQuickLookMonitor()
+            installKeyboardShortcutsMonitor()
         }
         .onDisappear {
-            removeQuickLookMonitor()
+            removeKeyboardShortcutsMonitor()
         }
         .onChange(of: selectedEntry) { _, newEntry in
             guard quickLookService.isShowing else { return }
@@ -72,22 +82,44 @@ struct ContentView: View {
         }
     }
 
-    /// Space toggles Quick Look and Enter opens the selected file, both scoped to
-    /// selectedEntry; every other key (and Enter/Space on a folder) passes through
-    /// untouched so List navigation, buttons, etc. keep working as before.
-    /// Escape isn't handled here — QLPreviewPanel is a real NSPanel that already
-    /// closes itself on Escape natively.
-    private func installQuickLookMonitor() {
-        guard quickLookKeyMonitor == nil else { return }
-        quickLookKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            guard let entry = selectedEntry, !entry.isDirectory else { return event }
+    /// Centralized keyboard shortcuts for the file list: Space toggles Quick Look,
+    /// Enter opens the selected file, and Up/Down move selection. Every other key
+    /// (and Space/Enter with no file selected) passes through untouched so List
+    /// scrolling, buttons, etc. keep working as before. Escape isn't handled here —
+    /// QLPreviewPanel is a real NSPanel that already closes itself on Escape natively.
+    private func installKeyboardShortcutsMonitor() {
+        guard keyboardShortcutsMonitor == nil else { return }
+        keyboardShortcutsMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            switch event.keyCode {
+            case 125: // Down Arrow
+                moveSelection(by: 1)
+                return nil
+            case 126: // Up Arrow
+                moveSelection(by: -1)
+                return nil
+            case 53: // Escape — only ours to handle once Quick Look has had first refusal.
+                guard !quickLookService.isShowing else { return event }
+                guard FolderNavigation.canGoBack(current: currentFolder) else { return event }
+                goBack()
+                return nil
+            default:
+                break
+            }
+
+            guard let entry = selectedEntry else { return event }
 
             switch event.keyCode {
             case 49: // Space
+                guard !entry.isDirectory else { return event }
                 quickLookService.toggle(entry: entry, root: currentRoot)
                 return nil
             case 36, 76: // Return, keypad Enter
-                openFile(entry)
+                if entry.isDirectory {
+                    navigateIntoFolder(entry)
+                    selectedEntry = folderEntries.first
+                } else {
+                    openFile(entry)
+                }
                 return nil
             default:
                 return event
@@ -95,11 +127,30 @@ struct ContentView: View {
         }
     }
 
-    private func removeQuickLookMonitor() {
-        if let quickLookKeyMonitor {
-            NSEvent.removeMonitor(quickLookKeyMonitor)
+    private func removeKeyboardShortcutsMonitor() {
+        if let keyboardShortcutsMonitor {
+            NSEvent.removeMonitor(keyboardShortcutsMonitor)
         }
-        quickLookKeyMonitor = nil
+        keyboardShortcutsMonitor = nil
+    }
+
+    /// Moves selectedEntry by one position within folderEntries. Nothing selected
+    /// selects the first entry regardless of direction; at either edge, no-ops.
+    private func moveSelection(by offset: Int) {
+        guard !folderEntries.isEmpty else { return }
+
+        guard let currentIndex = selectedEntry.flatMap({ folderEntries.firstIndex(of: $0) }) else {
+            if let hoveredEntry, let hoveredIndex = folderEntries.firstIndex(of: hoveredEntry) {
+                selectedEntry = folderEntries[hoveredIndex]
+            } else {
+                selectedEntry = folderEntries.first
+            }
+            return
+        }
+
+        let nextIndex = currentIndex + offset
+        guard folderEntries.indices.contains(nextIndex) else { return }
+        selectedEntry = folderEntries[nextIndex]
     }
 
     private func restoreRootFolders() {
@@ -147,6 +198,7 @@ struct ContentView: View {
 
     private func reloadContents() {
         selectedEntry = nil
+        hoveredEntry = nil
 
         guard let folder = currentFolder else {
             folderEntries = rootFolders

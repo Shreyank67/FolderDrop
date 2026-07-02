@@ -21,35 +21,51 @@ struct FileListView: View {
     var onReveal: (FolderEntry) -> Void = { _ in }
     var onRequestRemove: (FolderEntry) -> Void = { _ in }
     var onSelect: (FolderEntry) -> Void = { _ in }
+    var onHover: (FolderEntry, Bool) -> Void = { _, _ in }
 
     var body: some View {
-        List(entries) { entry in
-            Group {
-                if isRootList {
-                    RootFolderRow(
-                        entry: entry,
-                        onOpen: onOpenFolder,
-                        onReveal: onReveal,
-                        onRequestRemove: onRequestRemove
-                    )
-                } else {
-                    FileRowView(entry: entry, root: root, isSelected: selectedEntry?.id == entry.id)
+        ScrollViewReader { proxy in
+            List(entries) { entry in
+                Group {
+                    if isRootList {
+                        RootFolderRow(
+                            entry: entry,
+                            isSelected: selectedEntry?.id == entry.id,
+                            onHoverChange: { onHover(entry, $0) },
+                            onOpen: onOpenFolder,
+                            onReveal: onReveal,
+                            onRequestRemove: onRequestRemove
+                        )
+                    } else {
+                        FileRowView(
+                            entry: entry,
+                            root: root,
+                            isSelected: selectedEntry?.id == entry.id,
+                            onHoverChange: { onHover(entry, $0) }
+                        )
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // A single, uncounted tap: no competing double-tap gesture means
+                    // SwiftUI never has to hold the click to disambiguate, so this fires
+                    // immediately. Folders navigate instantly; files just select.
+                    if entry.isDirectory {
+                        onOpenFolder(entry)
+                    } else {
+                        onSelect(entry)
+                    }
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
+            }
+            .listStyle(.plain)
+            .frame(minHeight: 260, maxHeight: 380)
+            .onChange(of: selectedEntry) { _, newEntry in
+                guard let newEntry else { return }
+                withAnimation {
+                    proxy.scrollTo(newEntry.id, anchor: .center)
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                // A single, uncounted tap: no competing double-tap gesture means
-                // SwiftUI never has to hold the click to disambiguate, so this fires
-                // immediately. Folders navigate instantly; files just select.
-                if entry.isDirectory {
-                    onOpenFolder(entry)
-                } else {
-                    onSelect(entry)
-                }
-            }
-            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
-        .listStyle(.plain)
-        .frame(minHeight: 260, maxHeight: 380)
     }
 }

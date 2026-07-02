@@ -16,6 +16,9 @@ struct FileRowView: View {
     var root: URL?
     /// Owned by ContentView; whether this row is the one persistently selected entry.
     var isSelected: Bool = false
+    /// Notifies callers of hover changes, purely so ContentView can seed keyboard
+    /// navigation from the hovered row. The visual highlight below stays local state.
+    var onHoverChange: (Bool) -> Void = { _ in }
 
     /// Hover is purely transient and local to this row, unlike selection.
     @State private var isHovering = false
@@ -39,6 +42,7 @@ struct FileRowView: View {
         .animation(.easeInOut(duration: 0.16), value: isHovering)
         .onHover { hovering in
             isHovering = hovering
+            onHoverChange(hovering)
         }
         .modifier(FileDragModifier(entry: entry, root: root))
     }
