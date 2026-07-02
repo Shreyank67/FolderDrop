@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct FolderEntry: Identifiable, Equatable {
+struct FolderEntry: Identifiable, Equatable, Hashable {
     let url: URL
     let isDirectory: Bool
 

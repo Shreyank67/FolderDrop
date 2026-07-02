@@ -14,9 +14,9 @@ struct ContentView: View {
     @State private var currentRoot: URL?
     @State private var currentFolder: URL?
     @State private var folderEntries: [FolderEntry] = []
-    @State private var selectedEntry: FolderEntry?
+    @State private var selectionState = SelectionState()
     /// Only ever read once, inside moveSelection, to seed where keyboard navigation
-    /// starts from when nothing is selected yet — never written from selectedEntry.
+    /// starts from when nothing is active yet — never written from selectionState.
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
     @State private var keyboardShortcutsMonitor: Any?
@@ -37,12 +37,15 @@ struct ContentView: View {
                         entries: folderEntries,
                         isRootList: currentFolder == nil,
                         root: currentRoot,
-                        selectedEntry: selectedEntry,
+                        selectedEntries: selectionState.selectedEntries,
+                        activeEntry: selectionState.activeEntry,
                         onOpenFile: openFile,
                         onOpenFolder: navigateIntoFolder,
                         onReveal: revealInFinder,
                         onRequestRemove: requestRemoval,
-                        onSelect: { selectedEntry = $0 },
+                        onSelect: { selectionState.selectOnly($0) },
+                        onCommandSelect: { selectionState.toggle($0) },
+                        onShiftSelect: { selectionState.selectRange(to: $0, in: folderEntries) },
                         onHover: { entry, isHovering in
                             if isHovering {
                                 hoveredEntry = entry
@@ -72,7 +75,7 @@ struct ContentView: View {
         .onDisappear {
             removeKeyboardShortcutsMonitor()
         }
-        .onChange(of: selectedEntry) { _, newEntry in
+        .onChange(of: selectionState.activeEntry) { _, newEntry in
             guard quickLookService.isShowing else { return }
             if let newEntry, !newEntry.isDirectory {
                 quickLookService.show(entry: newEntry, root: currentRoot)
@@ -90,12 +93,14 @@ struct ContentView: View {
     private func installKeyboardShortcutsMonitor() {
         guard keyboardShortcutsMonitor == nil else { return }
         keyboardShortcutsMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            let isExtending = event.modifierFlags.contains(.shift)
+
             switch event.keyCode {
             case 125: // Down Arrow
-                moveSelection(by: 1)
+                moveSelection(by: 1, extending: isExtending)
                 return nil
             case 126: // Up Arrow
-                moveSelection(by: -1)
+                moveSelection(by: -1, extending: isExtending)
                 return nil
             case 53: // Escape — only ours to handle once Quick Look has had first refusal.
                 guard !quickLookService.isShowing else { return event }
@@ -106,7 +111,7 @@ struct ContentView: View {
                 break
             }
 
-            guard let entry = selectedEntry else { return event }
+            guard let entry = selectionState.activeEntry else { return event }
 
             switch event.keyCode {
             case 49: // Space
@@ -116,7 +121,9 @@ struct ContentView: View {
             case 36, 76: // Return, keypad Enter
                 if entry.isDirectory {
                     navigateIntoFolder(entry)
-                    selectedEntry = folderEntries.first
+                    if let first = folderEntries.first {
+                        selectionState.selectOnly(first)
+                    }
                 } else {
                     openFile(entry)
                 }
@@ -134,23 +141,21 @@ struct ContentView: View {
         keyboardShortcutsMonitor = nil
     }
 
-    /// Moves selectedEntry by one position within folderEntries. Nothing selected
-    /// selects the first entry regardless of direction; at either edge, no-ops.
-    private func moveSelection(by offset: Int) {
+    /// Moves the active entry by one position within folderEntries via SelectionState.
+    /// Nothing active yet seeds from the hovered row (if still present), else the
+    /// first entry, regardless of direction or Shift.
+    private func moveSelection(by offset: Int, extending: Bool) {
         guard !folderEntries.isEmpty else { return }
 
-        guard let currentIndex = selectedEntry.flatMap({ folderEntries.firstIndex(of: $0) }) else {
-            if let hoveredEntry, let hoveredIndex = folderEntries.firstIndex(of: hoveredEntry) {
-                selectedEntry = folderEntries[hoveredIndex]
-            } else {
-                selectedEntry = folderEntries.first
+        guard selectionState.activeEntry != nil else {
+            let seed = (hoveredEntry.flatMap { folderEntries.contains($0) ? $0 : nil }) ?? folderEntries.first
+            if let seed {
+                selectionState.selectOnly(seed)
             }
             return
         }
 
-        let nextIndex = currentIndex + offset
-        guard folderEntries.indices.contains(nextIndex) else { return }
-        selectedEntry = folderEntries[nextIndex]
+        selectionState.moveActive(by: offset, in: folderEntries, extending: extending)
     }
 
     private func restoreRootFolders() {
@@ -197,7 +202,7 @@ struct ContentView: View {
     }
 
     private func reloadContents() {
-        selectedEntry = nil
+        selectionState.clear()
         hoveredEntry = nil
 
         guard let folder = currentFolder else {

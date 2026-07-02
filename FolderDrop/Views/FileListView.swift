@@ -6,6 +6,7 @@
 //  Takes an array of FolderEntry values and delegates each row to FileRowView.
 //
 
+import AppKit
 import SwiftUI
 
 struct FileListView: View {
@@ -14,13 +15,17 @@ struct FileListView: View {
     /// The security-scoped root folder backing this browsing session, passed to
     /// file rows so they can access the file when a drag session requests it.
     var root: URL?
-    /// Owned by ContentView; the single persistently selected entry, if any.
-    var selectedEntry: FolderEntry?
+    /// Owned by ContentView's SelectionState.
+    var selectedEntries: Set<FolderEntry> = []
+    /// The single focused entry — used only to decide what to scroll to.
+    var activeEntry: FolderEntry?
     let onOpenFile: (FolderEntry) -> Void
     let onOpenFolder: (FolderEntry) -> Void
     var onReveal: (FolderEntry) -> Void = { _ in }
     var onRequestRemove: (FolderEntry) -> Void = { _ in }
     var onSelect: (FolderEntry) -> Void = { _ in }
+    var onCommandSelect: (FolderEntry) -> Void = { _ in }
+    var onShiftSelect: (FolderEntry) -> Void = { _ in }
     var onHover: (FolderEntry, Bool) -> Void = { _, _ in }
 
     var body: some View {
@@ -30,7 +35,7 @@ struct FileListView: View {
                     if isRootList {
                         RootFolderRow(
                             entry: entry,
-                            isSelected: selectedEntry?.id == entry.id,
+                            isSelected: selectedEntries.contains(entry),
                             onHoverChange: { onHover(entry, $0) },
                             onOpen: onOpenFolder,
                             onReveal: onReveal,
@@ -40,7 +45,7 @@ struct FileListView: View {
                         FileRowView(
                             entry: entry,
                             root: root,
-                            isSelected: selectedEntry?.id == entry.id,
+                            isSelected: selectedEntries.contains(entry),
                             onHoverChange: { onHover(entry, $0) }
                         )
                     }
@@ -49,9 +54,18 @@ struct FileListView: View {
                 .onTapGesture {
                     // A single, uncounted tap: no competing double-tap gesture means
                     // SwiftUI never has to hold the click to disambiguate, so this fires
-                    // immediately. Folders navigate instantly; files just select.
+                    // immediately. Folders navigate instantly; files select, with the
+                    // current modifier keys deciding plain/command/shift click intent.
                     if entry.isDirectory {
                         onOpenFolder(entry)
+                        return
+                    }
+
+                    let modifiers = NSEvent.modifierFlags
+                    if modifiers.contains(.command) {
+                        onCommandSelect(entry)
+                    } else if modifiers.contains(.shift) {
+                        onShiftSelect(entry)
                     } else {
                         onSelect(entry)
                     }
@@ -60,7 +74,7 @@ struct FileListView: View {
             }
             .listStyle(.plain)
             .frame(minHeight: 260, maxHeight: 380)
-            .onChange(of: selectedEntry) { _, newEntry in
+            .onChange(of: activeEntry) { _, newEntry in
                 guard let newEntry else { return }
                 withAnimation {
                     proxy.scrollTo(newEntry.id, anchor: .center)
