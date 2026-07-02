@@ -11,6 +11,9 @@ import SwiftUI
 struct FileListView: View {
     let entries: [FolderEntry]
     var isRootList: Bool = false
+    /// The security-scoped root folder backing this browsing session, passed to
+    /// file rows so they can access the file when a drag session requests it.
+    var root: URL?
     let onOpenFile: (FolderEntry) -> Void
     let onOpenFolder: (FolderEntry) -> Void
     var onReveal: (FolderEntry) -> Void = { _ in }
@@ -27,7 +30,7 @@ struct FileListView: View {
                         onRequestRemove: onRequestRemove
                     )
                 } else {
-                    FileRowView(entry: entry)
+                    FileRowView(entry: entry, root: root)
                 }
             }
             .contentShape(Rectangle())

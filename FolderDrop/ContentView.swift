@@ -30,6 +30,7 @@ struct ContentView: View {
                     FileListView(
                         entries: folderEntries,
                         isRootList: currentFolder == nil,
+                        root: currentRoot,
                         onOpenFile: openFile,
                         onOpenFolder: navigateIntoFolder,
                         onReveal: revealInFinder,

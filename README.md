@@ -334,3 +334,6 @@ FileRowView
 - changed workflow (ChatGPT, Claude Code, VS Code)
 - Added new features
 - Made UI improvements
+- Implemented folder persistent
+- Implemented multipal folder support
+- Implemented root folder context menu and removal
