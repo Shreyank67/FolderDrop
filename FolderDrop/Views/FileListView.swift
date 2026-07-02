@@ -14,10 +14,13 @@ struct FileListView: View {
     /// The security-scoped root folder backing this browsing session, passed to
     /// file rows so they can access the file when a drag session requests it.
     var root: URL?
+    /// Owned by ContentView; the single persistently selected entry, if any.
+    var selectedEntry: FolderEntry?
     let onOpenFile: (FolderEntry) -> Void
     let onOpenFolder: (FolderEntry) -> Void
     var onReveal: (FolderEntry) -> Void = { _ in }
     var onRequestRemove: (FolderEntry) -> Void = { _ in }
+    var onSelect: (FolderEntry) -> Void = { _ in }
 
     var body: some View {
         List(entries) { entry in
@@ -25,16 +28,18 @@ struct FileListView: View {
                 if isRootList {
                     RootFolderRow(
                         entry: entry,
+                        isSelected: selectedEntry?.id == entry.id,
                         onOpen: onOpenFolder,
                         onReveal: onReveal,
                         onRequestRemove: onRequestRemove
                     )
                 } else {
-                    FileRowView(entry: entry, root: root)
+                    FileRowView(entry: entry, root: root, isSelected: selectedEntry?.id == entry.id)
                 }
             }
             .contentShape(Rectangle())
             .onTapGesture {
+                onSelect(entry)
                 if entry.isDirectory {
                     onOpenFolder(entry)
                 } else {

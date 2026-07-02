@@ -14,6 +14,11 @@ struct FileRowView: View {
     /// The security-scoped root folder this entry lives under. Needed to briefly
     /// reopen sandbox access while handing the file off to a drag session.
     var root: URL?
+    /// Owned by ContentView; whether this row is the one persistently selected entry.
+    var isSelected: Bool = false
+
+    /// Hover is purely transient and local to this row, unlike selection.
+    @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -26,7 +31,29 @@ struct FileRowView: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 4)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(highlightColor)
+        )
+        .animation(.easeInOut(duration: 0.16), value: isHovering)
+        .onHover { hovering in
+            isHovering = hovering
+        }
         .modifier(FileDragModifier(entry: entry, root: root))
+    }
+
+    /// Selection keeps the same emphasized color AppKit gives a selected, key-window
+    /// list row. Hover uses a light system-accent-color tint instead of gray, so it
+    /// still reads as "not yet selected" rather than competing with selection.
+    private var highlightColor: Color {
+        if isSelected {
+            return Color(nsColor: .selectedContentBackgroundColor)
+        } else if isHovering {
+            return Color(nsColor: .controlAccentColor).opacity(0.12)
+        } else {
+            return .clear
+        }
     }
 }
 

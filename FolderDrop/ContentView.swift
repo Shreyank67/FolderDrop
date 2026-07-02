@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var currentRoot: URL?
     @State private var currentFolder: URL?
     @State private var folderEntries: [FolderEntry] = []
+    @State private var selectedEntry: FolderEntry?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -31,10 +32,12 @@ struct ContentView: View {
                         entries: folderEntries,
                         isRootList: currentFolder == nil,
                         root: currentRoot,
+                        selectedEntry: selectedEntry,
                         onOpenFile: openFile,
                         onOpenFolder: navigateIntoFolder,
                         onReveal: revealInFinder,
-                        onRequestRemove: requestRemoval
+                        onRequestRemove: requestRemoval,
+                        onSelect: { selectedEntry = $0 }
                     )
 
                     Button("Add Folder") {
@@ -99,6 +102,8 @@ struct ContentView: View {
     }
 
     private func reloadContents() {
+        selectedEntry = nil
+
         guard let folder = currentFolder else {
             folderEntries = rootFolders
                 .map { FolderEntry(url: $0, isDirectory: true) }
