@@ -66,6 +66,39 @@ enum FocusDebugLog {
         """)
         focusChain("===== end window hierarchy: \(context) =====")
     }
+
+    /// Recursively dumps a view hierarchy's class names and frames, flagging
+    /// NSOutlineView instances and any class whose name mentions "sidebar" —
+    /// for the NSOpenPanel sidebar-responder investigation, to find exactly
+    /// which private AppKit view the sidebar actually is.
+    static func dumpViewHierarchy(_ view: NSView, indent: String = "") {
+        let className = String(describing: type(of: view))
+        var markers = ""
+        if view is NSOutlineView { markers += " <-- NSOutlineView" }
+        if className.lowercased().contains("sidebar") { markers += " <-- class name contains 'sidebar'" }
+        focusChain("\(indent)\(className) frame=\(view.frame)\(markers)")
+        for subview in view.subviews {
+            dumpViewHierarchy(subview, indent: indent + "  ")
+        }
+    }
+
+    /// Full responder/key-state snapshot for a specific window — used for the
+    /// NSOpenPanel sidebar investigation to see exactly who owns first
+    /// responder, before and after the path popup is clicked.
+    static func logResponderState(context: String, window: NSWindow?) {
+        guard let window else {
+            focusChain("[\(context)] window=nil")
+            return
+        }
+        let firstResponder = window.firstResponder
+        let initialFirstResponder = window.initialFirstResponder
+        focusChain("""
+        [\(context)] firstResponder=\(String(describing: type(of: firstResponder))) (\(firstResponder)) \
+        initialFirstResponder=\(initialFirstResponder.map { String(describing: type(of: $0)) } ?? "nil") \
+        window.isKeyWindow=\(window.isKeyWindow) window.isMainWindow=\(window.isMainWindow) \
+        NSApp.keyWindow=\(describe(NSApp.keyWindow)) NSApp.mainWindow=\(describe(NSApp.mainWindow))
+        """)
+    }
 }
 
 /// Installs temporary NotificationCenter observers to trace window key/main

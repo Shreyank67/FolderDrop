@@ -319,20 +319,95 @@ struct ContentView: View {
     }
 
     private func selectFolder() {
+        // DEBUG-INSTRUMENTATION: timing/window-state trace for the Add Folder /
+        // NSOpenPanel lag investigation.
+        #if DEBUG
+        let buttonPressedAt = Date()
+        FocusDebugLog.focusChain("[AddFolder] button pressed at \(buttonPressedAt.timeIntervalSinceReferenceDate)")
+        FocusDebugLog.appStateSnapshot(context: "AddFolder pressed, before creating NSOpenPanel")
+        FocusDebugLog.logWindowHierarchy(context: "AddFolder pressed, before creating NSOpenPanel")
+        #endif
+
         let panel = NSOpenPanel()
+
+        #if DEBUG
+        let panelCreatedAt = Date()
+        FocusDebugLog.focusChain("[AddFolder] NSOpenPanel() created, elapsed since press: \(panelCreatedAt.timeIntervalSince(buttonPressedAt))s")
+        #endif
+
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = "Add"
 
+        // FolderDrop is an accessory (LSUIElement) app: becoming key doesn't
+        // make the app itself active, and some panel controls — the sidebar's
+        // NSOutlineView in particular — render/behave as inactive until the
+        // app is genuinely active, not just key-windowed.
+        NSApp.activate()
+
+        #if DEBUG
+        let beforeBeginAt = Date()
+        FocusDebugLog.focusChain("[AddFolder] calling panel.begin(completionHandler:), elapsed since creation: \(beforeBeginAt.timeIntervalSince(panelCreatedAt))s")
+        FocusDebugLog.appStateSnapshot(context: "AddFolder immediately before panel.begin()")
+        #endif
+
         panel.begin { response in
+            #if DEBUG
+            let dismissedAt = Date()
+            FocusDebugLog.focusChain("[AddFolder] completion handler fired, elapsed since begin() was called: \(dismissedAt.timeIntervalSince(beforeBeginAt))s, response=\(response == .OK ? "OK" : "Cancel")")
+            FocusDebugLog.appStateSnapshot(context: "AddFolder in panel.begin completion handler")
+            #endif
             guard response == .OK, let url = panel.url else { return }
             guard !rootFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) else { return }
 
             FolderPersistence.add(url)
             rootFolders.append(url)
             reloadContents()
+
+            #if DEBUG
+            let doneAt = Date()
+            FocusDebugLog.focusChain("[AddFolder] reloadContents() finished, elapsed since dismissal: \(doneAt.timeIntervalSince(dismissedAt))s")
+            #endif
         }
+
+        #if DEBUG
+        // R-investigation: dump the panel's view hierarchy (to find exactly which
+        // view is the sidebar) and its first responder shortly after presentation,
+        // then poll for first-responder changes until the panel is dismissed — the
+        // sidebar is a private AppKit view we can't subclass or hook directly, so
+        // detecting the responder change after clicking the path popup requires
+        // watching for it rather than intercepting the click itself.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            FocusDebugLog.focusChain("[AddFolder] === NSOpenPanel view hierarchy dump ===")
+            if let contentView = panel.contentView {
+                FocusDebugLog.dumpViewHierarchy(contentView)
+            }
+            FocusDebugLog.logResponderState(context: "AddFolder shortly after presentation", window: panel)
+
+            var lastResponderDescription = String(describing: panel.firstResponder)
+            var pollTimer: Timer?
+            pollTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { timer in
+                guard panel.isVisible else {
+                    FocusDebugLog.focusChain("[AddFolder] panel no longer visible, stopping first-responder poll")
+                    timer.invalidate()
+                    return
+                }
+                let currentDescription = String(describing: panel.firstResponder)
+                if currentDescription != lastResponderDescription {
+                    FocusDebugLog.focusChain("[AddFolder] firstResponder changed:\n  from: \(lastResponderDescription)\n  to:   \(currentDescription)")
+                    FocusDebugLog.logResponderState(context: "AddFolder firstResponder changed", window: panel)
+                    lastResponderDescription = currentDescription
+                }
+            }
+            _ = pollTimer
+        }
+        #endif
+
+        #if DEBUG
+        let beginReturnedAt = Date()
+        FocusDebugLog.focusChain("[AddFolder] panel.begin() call returned to caller, elapsed since call: \(beginReturnedAt.timeIntervalSince(beforeBeginAt))s (should be ~0 if truly non-blocking)")
+        #endif
     }
 
     private func navigateIntoFolder(_ entry: FolderEntry) {
