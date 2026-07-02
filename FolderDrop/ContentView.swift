@@ -19,7 +19,13 @@ struct ContentView: View {
     /// starts from when nothing is active yet — never written from selectionState.
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
-    @State private var keyboardShortcutsMonitor: Any?
+    /// A process-global slot, deliberately not @State: MenuBarExtra's .window-style
+    /// content can be torn down and recreated across open/close cycles without a
+    /// reliable .onDisappear, which would otherwise leak a stale monitor from a
+    /// previous ContentView instance. A static var survives that regardless, so
+    /// installKeyboardShortcutsMonitor can always remove any prior one before
+    /// installing a new one — guaranteeing exactly one live monitor at a time.
+    private static var keyboardShortcutsMonitor: Any?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -91,8 +97,15 @@ struct ContentView: View {
     /// scrolling, buttons, etc. keep working as before. Escape isn't handled here —
     /// QLPreviewPanel is a real NSPanel that already closes itself on Escape natively.
     private func installKeyboardShortcutsMonitor() {
-        guard keyboardShortcutsMonitor == nil else { return }
-        keyboardShortcutsMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        // Unconditionally clear any prior monitor first — even one left behind by a
+        // ContentView instance that was torn down without .onDisappear ever firing —
+        // so there can never be more than one alive competing for the same keyDown.
+        if let existing = Self.keyboardShortcutsMonitor {
+            NSEvent.removeMonitor(existing)
+            Self.keyboardShortcutsMonitor = nil
+        }
+
+        Self.keyboardShortcutsMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let isExtending = event.modifierFlags.contains(.shift)
 
             switch event.keyCode {
@@ -135,10 +148,10 @@ struct ContentView: View {
     }
 
     private func removeKeyboardShortcutsMonitor() {
-        if let keyboardShortcutsMonitor {
-            NSEvent.removeMonitor(keyboardShortcutsMonitor)
+        if let existing = Self.keyboardShortcutsMonitor {
+            NSEvent.removeMonitor(existing)
         }
-        keyboardShortcutsMonitor = nil
+        Self.keyboardShortcutsMonitor = nil
     }
 
     /// Moves the active entry by one position within folderEntries via SelectionState.

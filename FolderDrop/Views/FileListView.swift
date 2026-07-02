@@ -46,7 +46,11 @@ struct FileListView: View {
                             entry: entry,
                             root: root,
                             isSelected: selectedEntries.contains(entry),
-                            onHoverChange: { onHover(entry, $0) }
+                            selectedEntries: selectedEntries,
+                            onHoverChange: { onHover(entry, $0) },
+                            onSelect: onSelect,
+                            onCommandSelect: onCommandSelect,
+                            onShiftSelect: onShiftSelect
                         )
                     }
                 }
