@@ -190,13 +190,17 @@ private struct FileDragModifier: ViewModifier {
     }
 
     /// AppKit doesn't delete the source file it copies from during a drag, so we own its
-    /// lifecycle. The delay gives slower destinations (network drives, large uploads)
-    /// enough time to finish reading before the copy is removed.
+    /// lifecycle. The delay (configurable in Settings > General, 60s by default) gives
+    /// slower destinations (network drives, large uploads) enough time to finish
+    /// reading before the copy is removed.
     fileprivate static func scheduleCleanup(of stagedURL: URL?) {
         guard let stagedURL else { return }
         let stagingDirectory = stagedURL.deletingLastPathComponent()
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+        let storedDelay = UserDefaults.standard.integer(forKey: SettingsKeys.dragCleanupDelaySeconds)
+        let delaySeconds = storedDelay > 0 ? storedDelay : 60
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(delaySeconds)) {
             try? FileManager.default.removeItem(at: stagingDirectory)
         }
     }

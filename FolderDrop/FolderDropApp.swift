@@ -14,5 +14,13 @@ struct FolderDropApp: App {
             ContentView()
         }
         .menuBarExtraStyle(.window)
+
+        // A native Settings scene is a singleton window by construction: SwiftUI
+        // brings the existing window to front on a repeat openSettings() call
+        // rather than creating another one, so no custom "already open" tracking
+        // is needed for that requirement.
+        Settings {
+            SettingsView()
+        }
     }
 }

@@ -12,6 +12,8 @@ struct FolderHeaderView: View {
     let currentFolder: URL?
     let rootFolderCount: Int
 
+    @Environment(\.openSettings) private var openSettings
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -21,8 +23,7 @@ struct FolderHeaderView: View {
                 Spacer(minLength: 0)
 
                 Button {
-                    // Placeholder until a real settings scene exists.
-                    print("Settings coming soon.")
+                    openSettings()
                 } label: {
                     Image(systemName: "gearshape")
                 }

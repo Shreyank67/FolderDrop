@@ -19,6 +19,9 @@ struct ContentView: View {
     /// starts from when nothing is active yet — never written from selectionState.
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
+    @AppStorage(SettingsKeys.quickLookEnabled) private var isQuickLookEnabled = true
+    @AppStorage(SettingsKeys.restoresLastOpenedFolder) private var restoresLastOpenedFolder = false
+    @AppStorage(SettingsKeys.lastOpenedFolderPath) private var lastOpenedFolderPath: String?
     /// A process-global slot, deliberately not @State: MenuBarExtra's .window-style
     /// content can be torn down and recreated across open/close cycles without a
     /// reliable .onDisappear, which would otherwise leak a stale monitor from a
@@ -165,7 +168,7 @@ struct ContentView: View {
 
             switch event.keyCode {
             case 49: // Space
-                guard !entry.isDirectory else { return event }
+                guard !entry.isDirectory, isQuickLookEnabled else { return event }
                 quickLookService.toggle(entries: previewEntries(for: entry), activeEntry: entry, root: currentRoot)
                 return nil
             case 36, 76: // Return, keypad Enter
@@ -238,6 +241,36 @@ struct ContentView: View {
         guard rootFolders.isEmpty else { return }
         rootFolders = FolderPersistence.restore()
         reloadContents()
+        restoreLastOpenedFolderIfNeeded()
+    }
+
+    /// Only meaningful right after restoreRootFolders() runs at launch. Requires
+    /// the saved folder to still exist under one of the restored roots — if the
+    /// toggle is off, or the match/existence check fails, we simply stay on the
+    /// root list, exactly like today.
+    private func restoreLastOpenedFolderIfNeeded() {
+        guard restoresLastOpenedFolder,
+              let savedPath = lastOpenedFolderPath,
+              let root = rootFolders.first(where: {
+                  savedPath == $0.path || savedPath.hasPrefix($0.path + "/")
+              })
+        else { return }
+
+        let savedFolder = URL(fileURLWithPath: savedPath)
+        let didAccess = root.startAccessingSecurityScopedResource()
+        defer { if didAccess { root.stopAccessingSecurityScopedResource() } }
+        guard didAccess, FileManager.default.fileExists(atPath: savedFolder.path) else { return }
+
+        currentRoot = root
+        currentFolder = savedFolder
+        reloadContents()
+    }
+
+    /// Records where the user is browsing so it can be restored on next launch,
+    /// only while the preference is on — otherwise there's nothing to save.
+    private func persistLastOpenedFolder() {
+        guard restoresLastOpenedFolder else { return }
+        lastOpenedFolderPath = currentFolder?.path
     }
 
     private func selectFolder() {
@@ -263,6 +296,7 @@ struct ContentView: View {
         }
         currentFolder = entry.url
         reloadContents()
+        persistLastOpenedFolder()
     }
 
     private func goBack() {
@@ -275,6 +309,7 @@ struct ContentView: View {
             currentFolder = current.deletingLastPathComponent()
         }
         reloadContents()
+        persistLastOpenedFolder()
     }
 
     private func reloadContents() {
