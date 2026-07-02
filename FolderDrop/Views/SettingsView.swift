@@ -70,24 +70,24 @@ private struct GeneralSettingsView: View {
         Form {
             Section("Startup") {
                 Toggle(isOn: launchAtLoginBinding) {
-                    SettingLabel(
+                    SettingTitleDescription(
                         title: "Launch FolderDrop at Login",
-                        help: "Automatically starts FolderDrop whenever you log into your Mac."
+                        description: "Automatically starts FolderDrop whenever you log into your Mac."
                     )
                 }
             }
 
             Section("Behavior") {
                 Toggle(isOn: $isQuickLookEnabled) {
-                    SettingLabel(
+                    SettingTitleDescription(
                         title: "Enable Quick Look",
-                        help: "Press Space to preview the selected file without opening it."
+                        description: "Preview the selected file with the Space key without opening it."
                     )
                 }
                 Toggle(isOn: $restoresLastOpenedFolder) {
-                    SettingLabel(
+                    SettingTitleDescription(
                         title: "Restore last opened folder",
-                        help: "Reopen the folder you were browsing the last time FolderDrop was closed."
+                        description: "Reopen the folder you were browsing when FolderDrop was last closed."
                     )
                 }
             }
@@ -98,9 +98,9 @@ private struct GeneralSettingsView: View {
                         Text(delay.label).tag(delay)
                     }
                 } label: {
-                    SettingLabel(
+                    SettingTitleDescription(
                         title: "Clean up temporary files after",
-                        help: "Temporary copies created during drag and drop are automatically removed after this delay."
+                        description: "Temporary files created during drag and drop are automatically removed after the selected delay."
                     )
                 }
             }
@@ -195,22 +195,24 @@ private struct GeneralSettingsView: View {
     }
 }
 
-/// A setting's label plus a subtle info icon carrying its explanation as a
-/// native tooltip — reused by every configurable control so the icon/help
-/// wiring only exists in one place.
-private struct SettingLabel: View {
+/// A setting's title with its explanation permanently visible underneath,
+/// matching native macOS System Settings — reused by every configurable
+/// control so every setting is self-explanatory without hovering.
+private struct SettingTitleDescription: View {
     let title: String
-    let help: String
+    let description: String
 
     var body: some View {
-        HStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(title)
 
-            Image(systemName: "info.circle")
-                .imageScale(.small)
+            Text(description)
+                .font(.footnote)
                 .foregroundStyle(.secondary)
-                .help(help)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.bottom, 8)
     }
 }
 
