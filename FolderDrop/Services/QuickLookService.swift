@@ -29,6 +29,29 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
 
     var isShowing: Bool { isPanelOpen }
 
+    /// Fires once AppKit has actually confirmed QLPreviewPanel relinquished
+    /// key status — not merely when we've decided to close it. Driven by
+    /// NSWindow.didResignKeyNotification (see observePanelDidResignKey/
+    /// handlePanelDidResignKey below), the genuine AppKit completion signal,
+    /// rather than by close()/previewPanelWillClose() themselves, which are
+    /// both "will" moments that fire before AppKit's own state has settled.
+    /// Purely a completion signal: this class has no notion of what a caller
+    /// does with it (focus, UI state, anything else), keeping it responsible
+    /// only for Quick Look itself.
+    var onClose: (() -> Void)?
+
+    /// Registered once, lazily, the first time show() runs — see
+    /// observePanelDidResignKey(_:). Removed in deinit so a QuickLookService
+    /// instance recreated across MenuBarExtra open/close cycles never leaks
+    /// an observer on QLPreviewPanel's long-lived shared singleton.
+    private var didResignKeyObserver: NSObjectProtocol?
+
+    deinit {
+        if let didResignKeyObserver {
+            NotificationCenter.default.removeObserver(didResignKeyObserver)
+        }
+    }
+
     /// Callers just say "toggle Quick Look for this set of files" — the service
     /// decides whether that means opening it, switching to different content, or
     /// closing it. Folders never open the panel.
@@ -64,6 +87,7 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
         FocusDebugLog.appStateSnapshot(context: "before opening Quick Look (show())")
         #endif
         guard !activeEntry.isDirectory, !entries.isEmpty, let panel = QLPreviewPanel.shared() else { return }
+        observePanelDidResignKey(panel)
 
         if !previewItems.isEmpty {
             self.root?.stopAccessingSecurityScopedResource()
@@ -109,6 +133,8 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
         #if DEBUG
         Self.debugLogPanelState(context: "close() exit", isPanelOpen: isPanelOpen, previewedURL: nil)
         #endif
+        // onClose fires from handlePanelDidResignKey() once AppKit actually
+        // confirms the key-status transition, not synchronously from here.
     }
 
     // MARK: - QLPreviewPanelDataSource
@@ -140,6 +166,37 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
         root = nil
         previewItems = []
         currentIndex = 0
+        // onClose fires from handlePanelDidResignKey(), not here — see close().
+    }
+
+    // MARK: - Focus completion signal
+
+    /// Registered once, idempotently. QLPreviewPanel.shared() is a long-lived
+    /// singleton, so re-registering on every show() would accumulate duplicate
+    /// observers across repeated open/close cycles.
+    private func observePanelDidResignKey(_ panel: QLPreviewPanel) {
+        guard didResignKeyObserver == nil else { return }
+        didResignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification,
+            object: panel,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handlePanelDidResignKey()
+        }
+    }
+
+    /// Not every resignation of key status means Quick Look actually closed —
+    /// e.g. Cmd-Tabbing to another app while it's still showing also resigns
+    /// key. Only treat this as "closed" if we already recorded the close
+    /// ourselves (isPanelOpen already false), whether via close() or via the
+    /// native Escape path (previewPanelWillClose). That's what distinguishes
+    /// a real close from an unrelated key-status change.
+    private func handlePanelDidResignKey() {
+        guard !isPanelOpen else { return }
+        #if DEBUG
+        Self.debugLogPanelState(context: "handlePanelDidResignKey() -> firing onClose", isPanelOpen: isPanelOpen, previewedURL: nil)
+        #endif
+        onClose?()
     }
 
     // MARK: - DEBUG-INSTRUMENTATION

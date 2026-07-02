@@ -19,12 +19,13 @@ struct ContentView: View {
     /// starts from when nothing is active yet — never written from selectionState.
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
-    /// The exact NSWindow hosting this ContentView instance, resolved via
-    /// WindowAccessor below. Deterministic because it's read directly off a
-    /// view inside our own hierarchy, not searched for among NSApp.windows —
-    /// so it can never resolve to Settings/About/any other auxiliary window.
-    /// Used solely to restore key status after Quick Look closes.
-    @State private var menuBarWindow: NSWindow?
+    /// Points at the exact NSWindow hosting this ContentView instance, kept
+    /// current by WindowAccessor below, and used to restore key status once
+    /// quickLookService reports Quick Look has closed. A reference type (see
+    /// FocusRestoration) so the closure registered on quickLookService.onClose
+    /// always sees the latest window even though it's resolved asynchronously,
+    /// after that closure is registered.
+    @State private var focusRestoration = FocusRestoration()
     @AppStorage(SettingsKeys.quickLookEnabled) private var isQuickLookEnabled = true
     @AppStorage(SettingsKeys.restoresLastOpenedFolder) private var restoresLastOpenedFolder = false
     @AppStorage(SettingsKeys.lastOpenedFolderPath) private var lastOpenedFolderPath: String?
@@ -113,10 +114,20 @@ struct ContentView: View {
         .padding(.horizontal, 15)
         .padding(.vertical, 14)
         .frame(minWidth: 304)
-        .background(WindowAccessor { menuBarWindow = $0 })
+        .background(WindowAccessor { focusRestoration.targetWindow = $0 })
         .onAppear {
             restoreRootFolders()
             installKeyboardShortcutsMonitor()
+            // Restoring focus is a generic reaction to "Quick Look just closed,"
+            // however that happened — Space, deselecting, navigating away while
+            // it's open, or Escape closing it natively — so it's wired once here
+            // rather than duplicated at every call site that can close it.
+            quickLookService.onClose = { [focusRestoration] in
+                #if DEBUG
+                FocusDebugLog.logWindowHierarchy(context: "immediately after Quick Look closed (before any mouse interaction)")
+                #endif
+                focusRestoration.restore()
+            }
         }
         .onDisappear {
             removeKeyboardShortcutsMonitor()
@@ -199,22 +210,11 @@ struct ContentView: View {
                     #endif
                     return event
                 }
-                let wasShowingBeforeToggle = quickLookService.isShowing
                 quickLookService.toggle(entries: previewEntries(for: entry), activeEntry: entry, root: currentRoot)
                 #if DEBUG
                 FocusDebugLog.key("Space: quickLookService.toggle() called -> returning nil (consumed)")
                 FocusDebugLog.appStateSnapshot(context: "after Space handling")
                 #endif
-                // MenuBarExtra's backing window is a non-activating auxiliary panel:
-                // AppKit does not automatically hand key status back to it once
-                // QLPreviewPanel (a real activating window) takes and then relinquishes
-                // it. Restore it explicitly the moment we know Quick Look just closed.
-                if wasShowingBeforeToggle && !quickLookService.isShowing {
-                    menuBarWindow?.makeKeyAndOrderFront(nil)
-                    #if DEBUG
-                    FocusDebugLog.logWindowHierarchy(context: "immediately after Quick Look closed (before any mouse interaction)")
-                    #endif
-                }
                 return nil
             case 36, 76: // Return, keypad Enter
                 if entry.isDirectory {
