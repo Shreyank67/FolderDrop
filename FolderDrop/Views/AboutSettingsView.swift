@@ -2,9 +2,9 @@
 //  AboutSettingsView.swift
 //  FolderDrop
 //
-//  The About page of Settings: app identity, project links (placeholders for
-//  now), Check for Updates, and Restore Defaults — moved here from the old
-//  single-page General settings, unchanged in behavior.
+//  The About page of Settings: app identity, project links (placeholders
+//  until the project is published), open-source details, maintenance
+//  actions, and credits.
 //
 
 import AppKit
@@ -35,27 +35,48 @@ struct AboutSettingsView: View {
                     Text(versionString)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+
+                    Text("An open-source menu bar utility for quickly browsing, previewing, and opening files.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 320)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
             }
 
+            // Disabled rather than removed: these are prepared now so the
+            // project only needs real URLs wired in later, not new UI.
             Section("Project") {
-                Text("GitHub Repository")
-                    .foregroundStyle(.secondary)
-                Text("Website")
-                    .foregroundStyle(.secondary)
-                Text("Support Development")
-                    .foregroundStyle(.secondary)
+                ProjectLinkRow(title: "GitHub Repository")
+                ProjectLinkRow(title: "Documentation")
+                ProjectLinkRow(title: "Website")
+                ProjectLinkRow(title: "Support Development")
             }
 
-            Section {
+            Section("Open Source") {
+                LabeledContent("License", value: "MIT License")
+                LabeledContent("Built With", value: "SwiftUI, AppKit, Quick Look")
+                LabeledContent("Platform", value: "macOS")
+            }
+
+            Section("Maintenance") {
                 Button("Check for Updates…") {
                     showsUpToDateAlert = true
                 }
                 Button("Restore Defaults…") {
                     showsRestoreDefaultsConfirmation = true
                 }
+            }
+
+            Section("Created by") {
+                Text("Shreyank Patil")
+                    .foregroundStyle(.secondary)
+
+                Text("Thank you for supporting independent open-source software.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -94,6 +115,28 @@ struct AboutSettingsView: View {
     private var versionString: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         return "Version \(version)"
+    }
+}
+
+/// A row that visually reads as an outbound link — trailing external-link
+/// icon — but is disabled until the project has a real URL to send it to.
+/// No link is hardcoded or invented; this only prepares the row's shape.
+private struct ProjectLinkRow: View {
+    let title: String
+
+    var body: some View {
+        Button {
+            // Intentionally empty: disabled until a real URL exists.
+        } label: {
+            HStack {
+                Text(title)
+                Spacer()
+                Image(systemName: "arrow.up.right.square")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(true)
     }
 }
 
