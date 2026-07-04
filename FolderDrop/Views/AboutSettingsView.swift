@@ -2,17 +2,21 @@
 //  AboutSettingsView.swift
 //  FolderDrop
 //
-//  The About page of Settings: app identity, project links (placeholders
-//  until the project is published), open-source details, maintenance
-//  actions, and credits.
+//  The About page of Settings: app identity, project links, license and
+//  privacy summaries, maintenance actions, and credits.
 //
 
 import AppKit
 import SwiftUI
 
-/// Project links are intentionally disabled placeholders (see ProjectLinkRow
-/// below) rather than omitted — reserving their spot in the layout now avoids
-/// a settings-window redesign the day real URLs exist to fill them in.
+/// Only GitHub Repository and Report an Issue point anywhere real today —
+/// both use this repository's actual public URL. Website has no real
+/// destination yet, so it's shown as a disabled "Coming Soon" row rather
+/// than a hardcoded placeholder domain that doesn't exist. A future support/
+/// donate platform isn't listed at all yet — there's nothing to link, even
+/// as a placeholder, until one exists. Discussions is left out entirely too
+/// (not just disabled): GitHub Discussions isn't enabled for this
+/// repository, so there's nothing to link even as a placeholder.
 struct AboutSettingsView: View {
     // Only touched by restoreDefaults() below — the actual editors for these
     // live in GeneralSettingsView; this is the same UserDefaults-backed key,
@@ -23,6 +27,9 @@ struct AboutSettingsView: View {
 
     @State private var showsRestoreDefaultsConfirmation = false
     @State private var showsUpToDateAlert = false
+
+    private static let repositoryURL = URL(string: "https://github.com/Shreyank67/FolderDrop")!
+    private static let issuesURL = URL(string: "https://github.com/Shreyank67/FolderDrop/issues/new/choose")!
 
     var body: some View {
         Form {
@@ -39,7 +46,7 @@ struct AboutSettingsView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
 
-                    Text("An open-source menu bar utility for quickly browsing, previewing, and opening files.")
+                    Text("FolderDrop is an open-source macOS menu bar utility for quickly accessing, previewing, and dragging files from your frequently used folders.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -49,19 +56,21 @@ struct AboutSettingsView: View {
                 .padding(.vertical, 8)
             }
 
-            // Disabled rather than removed: these are prepared now so the
-            // project only needs real URLs wired in later, not new UI.
-            Section("Project") {
-                ProjectLinkRow(title: "GitHub Repository")
-                ProjectLinkRow(title: "Documentation")
-                ProjectLinkRow(title: "Website")
-                ProjectLinkRow(title: "Support Development")
+            Section("Links") {
+                ProjectLinkRow(title: "GitHub Repository", systemImage: "chevron.left.forwardslash.chevron.right", url: Self.repositoryURL)
+                ProjectLinkRow(title: "Report an Issue", systemImage: "ladybug", url: Self.issuesURL)
+                ProjectLinkRow(title: "Website", systemImage: "globe", url: nil)
             }
 
-            Section("Open Source") {
-                LabeledContent("License", value: "MIT License")
-                LabeledContent("Built With", value: "SwiftUI, AppKit, Quick Look")
-                LabeledContent("Platform", value: "macOS")
+            Section("License") {
+                Text("MIT License")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Privacy") {
+                Text("FolderDrop runs entirely on your Mac and does not collect analytics, telemetry, or personal data.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Maintenance") {
@@ -73,11 +82,15 @@ struct AboutSettingsView: View {
                 }
             }
 
-            Section("Created by") {
-                Text("Shreyank Patil")
+            Section("Credits") {
+                Text("Created by Shreyank Patil")
                     .foregroundStyle(.secondary)
 
-                Text("Thank you for supporting independent open-source software.")
+                Text("Built using SwiftUI and AppKit.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Text("Development assisted by ChatGPT and Claude.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -121,25 +134,35 @@ struct AboutSettingsView: View {
     }
 }
 
-/// A row that visually reads as an outbound link — trailing external-link
-/// icon — but is disabled until the project has a real URL to send it to.
-/// No link is hardcoded or invented; this only prepares the row's shape.
+/// A single "Links" row: a live outbound Link when a real URL exists, or a
+/// plain, non-interactive "Coming Soon" row when it doesn't. `.buttonStyle(.plain)`
+/// on the Link strips SwiftUI's default blue/underlined hyperlink styling so
+/// it reads as a native System Settings row rather than a web link.
 private struct ProjectLinkRow: View {
     let title: String
+    let systemImage: String
+    let url: URL?
 
     var body: some View {
-        Button {
-            // Intentionally empty: disabled until a real URL exists.
-        } label: {
+        if let url {
+            Link(destination: url) {
+                HStack {
+                    Label(title, systemImage: systemImage)
+                    Spacer()
+                    Image(systemName: "arrow.up.right.square")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
             HStack {
-                Text(title)
+                Label(title, systemImage: systemImage)
                 Spacer()
-                Image(systemName: "arrow.up.right.square")
+                Text("Coming Soon")
                     .foregroundStyle(.secondary)
             }
+            .foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
-        .disabled(true)
     }
 }
 
