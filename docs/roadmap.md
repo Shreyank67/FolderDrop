@@ -15,7 +15,7 @@ Work remaining before the first public release candidate:
 - [ ] Prebuilt, signed, notarized release build (see
       [release-process.md](release-process.md))
 - [ ] Real screenshots and a hero GIF for the README
-- [ ] `CONTRIBUTING.md` and issue templates finalized
+- [x] `CONTRIBUTING.md`, `CHANGELOG.md`, and issue/PR templates finalized
 - [ ] Continued UI polish passes, as needed (treated as an ongoing,
       incremental effort rather than a one-time pass)
 

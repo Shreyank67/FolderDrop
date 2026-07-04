@@ -26,13 +26,13 @@ FolderDrop has no external dependencies or package managers — it's a plain
 Xcode project.
 
 **Requirements:**
-- macOS 13 or later
-- Xcode 15 or later
+- macOS 26 or later
+- Xcode 26 or later
 
 **Setup:**
 
 ```bash
-git clone https://github.com/<your-org>/FolderDrop.git
+git clone https://github.com/Shreyank67/FolderDrop.git
 cd FolderDrop
 open FolderDrop.xcodeproj
 ```

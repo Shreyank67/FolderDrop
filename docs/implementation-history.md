@@ -493,7 +493,8 @@ itself lives in `UserDefaults`, observed via `@AppStorage`. Behavior wired up:
 
 **Contextual help.** A small helper (title + a `.help(...)`-carrying
 `info.circle` icon, later replaced by always-visible inline descriptions —
-see UI Polish) was reused for every setting rather than duplicating the
+see "Later — split into dedicated pages" below) was reused for every setting
+rather than duplicating the
 icon/tooltip wiring per control. SwiftUI's `.help()` has no delay/timing
 parameter, and the native AppKit tooltip system it's built on doesn't expose
 one either — tooltip delay is a system-wide, undocumented setting, not a

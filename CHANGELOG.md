@@ -56,5 +56,5 @@ Initial feature set.
 - Native file icons via `NSWorkspace`, matching what Finder shows for every
   registered macOS file type.
 
-[Unreleased]: https://github.com/<your-org>/FolderDrop/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/<your-org>/FolderDrop/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Shreyank67/FolderDrop/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Shreyank67/FolderDrop/releases/tag/v1.0.0
