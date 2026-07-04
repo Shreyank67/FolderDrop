@@ -1,0 +1,60 @@
+# Changelog
+
+All notable changes to FolderDrop are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project intends to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+once versioned releases begin shipping.
+
+For the detailed story behind how each feature below was built — including
+bugs found, approaches rejected, and native macOS behavior discovered along
+the way — see [docs/implementation-history.md](docs/implementation-history.md).
+
+## [Unreleased]
+
+Nothing yet — see [docs/roadmap.md](docs/roadmap.md) for what's planned.
+
+## [1.0.0]
+
+Initial feature set.
+
+### Added
+
+- Menu bar application — no Dock icon, no regular window; the entire UI is a
+  `MenuBarExtra` panel anchored under the menu bar icon.
+- Multiple, persistent root folders, added via a native folder picker, with
+  a native context menu (Open, Reveal in Finder, Remove).
+- Security-scoped bookmarks for root folder access, auto-refreshed when
+  stale and dropped automatically when no longer valid, so folder access
+  survives an app relaunch without re-prompting.
+- Folder navigation with back navigation and breadcrumbs.
+- Live folder refresh — the currently displayed folder (and every root
+  folder, for deletion detection) is watched for filesystem changes and
+  reloads automatically, with no polling.
+- Automatic cleanup of root folders deleted outside FolderDrop, with a safe
+  fallback to the root list if the folder being browsed disappears
+  mid-session.
+- Native Quick Look preview (Space to toggle), supporting both a single file
+  and a full multi-selection with native Left/Right cycling.
+- Native drag-and-drop, including genuine multi-file drag sessions, to
+  Finder, Mail, Chrome, Slack, VS Code, and other apps that read the
+  standard `public.file-url` pasteboard representation.
+- Finder-style multi-selection: plain click, ⌘-click (toggle), and
+  ⇧-click/⇧-arrow (range), fully interoperable with each other.
+- Full keyboard navigation: arrow keys, Shift-extend, Enter, Space, Escape,
+  ⌘A, ⌘⇧A.
+- Native Settings window (⌘, or the header gear icon), split into three
+  pages:
+  - **General** — Launch at Login (via `SMAppService`), Enable Quick Look,
+    Restore Last Opened Folder, configurable drag-cleanup delay
+    (30/60/120s), and Restore Defaults (with confirmation).
+  - **Hotkeys** — a read-only keyboard shortcuts reference.
+  - **About** — app info, version, project links, and a Check for Updates
+    placeholder.
+- Populated empty states (no root folders yet; folder is empty) with subtle
+  fade transitions between navigation states.
+- Native file icons via `NSWorkspace`, matching what Finder shows for every
+  registered macOS file type.
+
+[Unreleased]: https://github.com/<your-org>/FolderDrop/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/<your-org>/FolderDrop/releases/tag/v1.0.0

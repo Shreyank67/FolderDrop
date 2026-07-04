@@ -157,6 +157,12 @@ Contributions are welcome. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for how to
 
 ---
 
+## Changelog
+
+See **[CHANGELOG.md](CHANGELOG.md)** for a version-by-version summary of what's shipped, in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+
+---
+
 ## License
 
 FolderDrop is released under the **MIT License**. See [LICENSE](LICENSE) for the full text.
