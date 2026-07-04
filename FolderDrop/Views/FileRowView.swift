@@ -10,6 +10,10 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// A single row's rendering, hover state, and native drag source. Kept as one
+/// file (rather than splitting drag handling out) because the AppKit drag
+/// bridge below only exists to serve this exact view — it has no reason to be
+/// reusable elsewhere.
 struct FileRowView: View {
     let entry: FolderEntry
     /// The security-scoped root folder this entry lives under. Needed to briefly

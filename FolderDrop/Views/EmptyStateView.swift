@@ -8,6 +8,11 @@
 
 import SwiftUI
 
+/// Shared between "no root folders added yet" and "this folder is empty" — two
+/// visually similar but semantically different states. `iconSize` defaults to
+/// the smaller size used for the latter; only the top-level onboarding call
+/// site opts into a larger icon, since that's the one screen where the icon
+/// doubles as the primary visual anchor for a brand-new user.
 struct EmptyStateView: View {
     let systemImage: String
     var iconSize: CGFloat = 28

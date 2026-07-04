@@ -8,6 +8,10 @@
 
 import SwiftUI
 
+/// The three header states — browsing a folder, sitting at the root list, or
+/// having no root folders at all — are mutually exclusive and driven entirely
+/// by `currentFolder`/`rootFolderCount`, so this view never needs its own
+/// state to decide which to render.
 struct FolderHeaderView: View {
     let currentFolder: URL?
     let rootFolderCount: Int

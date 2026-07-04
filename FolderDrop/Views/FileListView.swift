@@ -9,6 +9,10 @@
 import AppKit
 import SwiftUI
 
+/// Renders either root folders or a subfolder's contents through the same
+/// list, switching row type (RootFolderRow vs. FileRowView) on `isRootList`
+/// rather than maintaining two separate list views — selection, scrolling, and
+/// the empty-space deselect behavior below only need to be implemented once.
 struct FileListView: View {
     let entries: [FolderEntry]
     var isRootList: Bool = false

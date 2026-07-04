@@ -10,6 +10,10 @@
 
 import SwiftUI
 
+/// Purely a reference list today — the shortcuts below are hardcoded to match
+/// ContentView's keyboard monitor exactly, so if those bindings ever change
+/// this list must be updated by hand alongside them (no shared source of
+/// truth between the two yet).
 struct HotkeysSettingsView: View {
     var body: some View {
         Form {

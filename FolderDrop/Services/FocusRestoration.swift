@@ -13,6 +13,8 @@
 
 import AppKit
 
+/// A single, explicit "give FolderDrop keyboard focus back" call site — see the
+/// file-level comment above for why this gap exists in the first place.
 final class FocusRestoration {
     /// The window to restore focus to. A mutable reference rather than a
     /// value captured at setup time, since the MenuBarExtra window is
@@ -20,6 +22,9 @@ final class FocusRestoration {
     /// be set after callers have already registered to call restore().
     var targetWindow: NSWindow?
 
+    /// Re-keys FolderDrop's panel. Safe to call even if targetWindow hasn't
+    /// resolved yet (a no-op) or if FolderDrop is already key (redundant but
+    /// harmless) — callers don't need to check either condition themselves.
     func restore() {
         targetWindow?.makeKeyAndOrderFront(nil)
     }

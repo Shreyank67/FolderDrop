@@ -8,6 +8,11 @@
 
 import Foundation
 
+/// Persists root folders as security-scoped bookmarks rather than plain paths.
+/// A sandboxed app loses filesystem access to a user-chosen location the
+/// moment the process that received it (via NSOpenPanel) exits — a bookmark is
+/// the only mechanism macOS provides for re-deriving that same grant on a
+/// future launch without asking the user to re-pick the folder every time.
 enum FolderPersistence {
     private static let bookmarksKey = "rootFolderBookmarks"
 

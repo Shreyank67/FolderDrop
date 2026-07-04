@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+/// FolderDrop has no Dock icon or regular window (`LSUIElement` in Info.plist)
+/// — `MenuBarExtra` in `.window` style is the entire UI, giving ContentView a
+/// borderless panel anchored under the menu bar icon instead of a normal
+/// window. The Settings scene is the one exception: it's a real window,
+/// created here so `openSettings()` (used from FolderHeaderView) has a scene
+/// to target.
 @main
 struct FolderDropApp: App {
     var body: some Scene {

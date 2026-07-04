@@ -11,6 +11,11 @@
 
 import Foundation
 
+/// Watches exactly one filesystem path per instance — ContentView creates one
+/// per root folder plus one for whatever subfolder is currently on screen,
+/// rather than a single watcher that tracks "the current location," so a root
+/// folder's own deletion is still observed even while browsing several levels
+/// beneath it (see ContentView.rootFolderWatchers).
 final class FolderWatcher {
     private var source: DispatchSourceFileSystemObject?
     private var pendingReload: DispatchWorkItem?

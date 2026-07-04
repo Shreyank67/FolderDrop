@@ -10,6 +10,11 @@
 import AppKit
 import QuickLookUI
 
+/// `QLPreviewPanel` is a single shared, cross-app singleton (not a window we
+/// own), so this class's whole job is disciplined bookkeeping around it: which
+/// files it's currently showing, whether we or AppKit initiated the last close,
+/// and keeping the security-scoped bookmark open for as long as the (separate,
+/// out-of-process) `quicklookd` needs to read the files itself.
 final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     /// The ordered set of files currently loaded into the panel. QLPreviewPanel
     /// natively handles Left/Right navigation across these once it knows there's

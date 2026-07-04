@@ -9,6 +9,12 @@
 
 import Foundation
 
+/// Reproduces Finder's three selection gestures (plain click, Command-click,
+/// Shift-click/arrow) over one displayed list. The persistent (Command-built)
+/// selection and the live Shift range are tracked separately, rather than as
+/// one merged set, because Shift ranges must be free to grow and shrink from
+/// the same fixed anchor on every subsequent Shift action without disturbing
+/// whatever Command-clicks had already committed.
 struct SelectionState: Equatable {
     /// Persistent selection built up by plain clicks (replaces) and Command-clicks
     /// (adds/removes one at a time). Never touched directly by Shift operations.

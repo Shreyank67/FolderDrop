@@ -24,6 +24,9 @@ enum CleanupDelay: Int, CaseIterable, Identifiable {
     }
 }
 
+/// Every toggle/picker here edits real, already-effective app state directly —
+/// there's no separate "Apply"/"Save" step, matching how every other macOS
+/// preferences window behaves.
 struct GeneralSettingsView: View {
     // Backed directly by UserDefaults via the shared keys — this view doesn't
     // hold its own copy of the state, it's just an editor for the real thing.

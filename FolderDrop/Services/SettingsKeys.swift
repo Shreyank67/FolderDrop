@@ -10,6 +10,10 @@
 
 import Foundation
 
+/// Central registry of `UserDefaults` key strings. Referencing `SettingsKeys.x`
+/// instead of a string literal at every `@AppStorage`/`UserDefaults` call site
+/// means a typo'd key fails to compile instead of silently reading/writing the
+/// wrong (or a brand-new, empty) default.
 enum SettingsKeys {
     static let quickLookEnabled = "quickLookEnabled"
     static let restoresLastOpenedFolder = "restoresLastOpenedFolder"

@@ -10,6 +10,9 @@
 import AppKit
 import SwiftUI
 
+/// Project links are intentionally disabled placeholders (see ProjectLinkRow
+/// below) rather than omitted — reserving their spot in the layout now avoids
+/// a settings-window redesign the day real URLs exist to fill them in.
 struct AboutSettingsView: View {
     // Only touched by restoreDefaults() below — the actual editors for these
     // live in GeneralSettingsView; this is the same UserDefaults-backed key,

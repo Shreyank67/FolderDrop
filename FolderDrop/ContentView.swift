@@ -9,6 +9,12 @@
 import AppKit
 import SwiftUI
 
+/// Every user-facing feature in FolderDrop — navigation, selection, Quick
+/// Look, drag-and-drop entry points, keyboard shortcuts, filesystem watching —
+/// is coordinated from this one view's @State. Child views (FileListView,
+/// FileRowView, FolderHeaderView, ...) are intentionally kept stateless and
+/// receive everything as parameters/callbacks, so there is exactly one place
+/// that needs to reason about how these features interact with each other.
 struct ContentView: View {
     @State private var rootFolders: [URL] = []
     @State private var currentRoot: URL?
@@ -330,6 +336,10 @@ struct ContentView: View {
         quickLookService.close()
     }
 
+    /// Runs once per launch — guarded on rootFolders already being empty since
+    /// `MenuBarExtra`'s `.window` style keeps this view's @State alive across
+    /// open/close cycles of the panel rather than recreating it, so `.onAppear`
+    /// can fire again later in the same process without this re-running.
     private func restoreRootFolders() {
         guard rootFolders.isEmpty else { return }
         rootFolders = FolderPersistence.restore()
@@ -392,6 +402,11 @@ struct ContentView: View {
         }
     }
 
+    /// currentRoot only changes when stepping from the root list into a root
+    /// folder for the first time (currentFolder was nil); descending further
+    /// into subfolders leaves it untouched. currentRoot is what every
+    /// security-scoped access call anchors to for the rest of this browsing
+    /// session, however deep currentFolder goes.
     private func navigateIntoFolder(_ entry: FolderEntry) {
         if currentFolder == nil {
             currentRoot = entry.url
@@ -401,6 +416,11 @@ struct ContentView: View {
         persistLastOpenedFolder()
     }
 
+    /// Steps up one directory level, or all the way out to the root list if
+    /// already at the root folder's own top — the two cases are distinguished
+    /// by comparing against currentRoot rather than counting path components,
+    /// since currentRoot is the one boundary FolderDrop actually cares about
+    /// (it's also the boundary of the security scope).
     private func goBack() {
         guard let current = currentFolder else { return }
 
@@ -414,6 +434,10 @@ struct ContentView: View {
         persistLastOpenedFolder()
     }
 
+    /// The single place folderEntries gets recomputed, from whatever
+    /// currentFolder/rootFolders currently are — called after every
+    /// navigation, add/remove, and filesystem-watcher callback, rather than
+    /// each call site patching folderEntries incrementally itself.
     private func reloadContents() {
         selectionState.clear()
         hoveredEntry = nil
@@ -462,6 +486,10 @@ struct ContentView: View {
         return FolderContentsLoader.load(from: folder)
     }
 
+    /// Opens with the user's default app for this file type. The security
+    /// scope only needs to stay open long enough for NSWorkspace to hand the
+    /// file off — unlike Quick Look, nothing here keeps reading the file after
+    /// this call returns, so the scope can close immediately afterward.
     private func openFile(_ entry: FolderEntry) {
         guard !entry.isDirectory, let root = currentRoot else { return }
 
@@ -493,6 +521,12 @@ struct ContentView: View {
         }
     }
 
+    /// User-initiated removal (after confirming in requestRemoval above) shares
+    /// its cleanup shape with handleRootFolderMaybeRemoved — clear persistence,
+    /// clear the in-memory list, and bail out of the removed root's navigation
+    /// if we were browsing inside it — since both ultimately mean "this root no
+    /// longer belongs in FolderDrop," whether the user removed it explicitly or
+    /// it simply stopped existing on disk.
     private func removeRootFolder(_ entry: FolderEntry) {
         let url = entry.url
         FolderPersistence.remove(url)

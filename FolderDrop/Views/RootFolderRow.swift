@@ -8,6 +8,10 @@
 
 import SwiftUI
 
+/// Root folders get their own context menu (Open / Reveal / Remove) instead of
+/// FileRowView's — "delete" for a root folder means detaching it from
+/// FolderDrop, not deleting anything on disk, so the copy and available
+/// actions are deliberately different from a regular file or subfolder row.
 struct RootFolderRow: View {
     let entry: FolderEntry
     /// Owned by ContentView; keyboard navigation now reaches the root list too,

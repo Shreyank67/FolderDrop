@@ -9,6 +9,9 @@
 
 import SwiftUI
 
+/// Entry point for the native Settings scene declared in FolderDropApp — pure
+/// layout, no state of its own. Each page owns and persists its own settings
+/// independently via `@AppStorage`.
 struct SettingsView: View {
     var body: some View {
         TabView {
