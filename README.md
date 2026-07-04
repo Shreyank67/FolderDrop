@@ -17,6 +17,7 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 ## Contents
 
 - [Features](#features)
+- [Privacy](#privacy)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
 - [Building](#building)
@@ -42,6 +43,25 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 - [x] Native Settings window
 - [x] Security-scoped bookmarks (persists folder access across launches)
 - [x] Menu bar application (no Dock icon, no regular window)
+
+---
+
+## Privacy
+
+FolderDrop browses the folders you point it at, and does nothing else.
+
+- Does not connect to the internet
+- No analytics
+- No telemetry
+- No crash reporting
+- No advertising
+- No tracking
+- Folder bookmarks stay on your Mac — never uploaded anywhere
+- File contents are never uploaded anywhere
+- Only accesses folders you explicitly grant access to through the native macOS file picker
+- Runs entirely locally
+
+See [docs/architecture.md](docs/architecture.md) for how folder access and persistence actually work under the hood.
 
 ---
 
