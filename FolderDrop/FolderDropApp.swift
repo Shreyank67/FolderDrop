@@ -17,7 +17,7 @@ struct FolderDropApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("FolderDrop", systemImage: "folder") {
+        MenuBarExtra("FolderDrop", image: "MenuIcon") {
             ContentView()
         }
         .menuBarExtraStyle(.window)
