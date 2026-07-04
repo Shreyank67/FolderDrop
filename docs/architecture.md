@@ -95,6 +95,38 @@ real event arrives.
 
 ---
 
+## Drag & Drop
+
+Dragging a file out of FolderDrop into Finder, Mail, Chrome, Slack, VS Code,
+or similar apps can't simply hand the destination the original file's URL:
+by the time a destination app actually reads it, FolderDrop's security scope
+around that file may already be closed, and the destination has no sandbox
+access of its own to reach into FolderDrop's granted folder anyway.
+`FileDragModifier` (in `FileRowView`) instead copies the file to a plain,
+unscoped temporary location up front, under a briefly-opened scope, and
+hands the destination that ordinary, sandbox-free copy — via both
+`registerFileRepresentation` (for AppKit apps that negotiate the
+coordinated/promise file protocol) and `registerObject(NSURL)` (for
+Chromium/Electron apps that read a `public.file-url` pasteboard entry
+directly). A genuine multi-file drag needs the same staging, but SwiftUI's
+`.onDrag` can only ever produce one `NSDraggingItem`; that case bridges into
+raw AppKit (`NSView.beginDraggingSession`) instead, reusing the identical
+staging function rather than duplicating it.
+
+**Why staged copies need their own cleanup.** AppKit never deletes the
+source file it read a drag from, so FolderDrop owns that copy's lifecycle
+itself: `FileDragModifier.scheduleCleanup` deletes it a configurable delay
+(30/60/120s) after the drag completes, giving slower destinations time to
+finish reading first. That delayed cleanup only runs if FolderDrop stays
+running long enough — if it quits, crashes, or macOS restarts before the
+delay elapses, the copy is orphaned. `DragStagingArea` exists specifically
+to close that gap: it's the one shared definition of where staged copies
+live (so drag staging and cleanup can never disagree on the path), and its
+`removeOrphanedFiles()` sweeps any leftovers on every launch, before the
+user can start a new drag of their own.
+
+---
+
 ## Selection
 
 `SelectionState` reproduces Finder's three selection gestures — plain click,
@@ -173,10 +205,9 @@ future launch without asking the user to re-pick the folder every time.
 `URL.bookmarkData(options: .withSecurityScope, ...)`:
 
 - **Adding** a folder stores a bookmark alongside the existing set.
-- **Restoring** resolves every stored bookmark, drops any that no longer
-  resolve or whose target no longer exists on disk, and transparently
-  re-writes any bookmark macOS reports as stale (`bookmarkDataIsStale`) — the
-  user is never asked to re-grant access for a folder that still exists.
+- **Restoring** resolves every stored bookmark and transparently re-writes
+  any bookmark macOS reports as stale (`bookmarkDataIsStale`) — the user is
+  never asked to re-grant access for a folder that still exists.
 
 Access is always bracketed tightly around the operation that needs it
 (`startAccessingSecurityScopedResource()` / `defer { stop... }`), never held
@@ -184,12 +215,30 @@ open persistently — a pattern established early and reused by every feature
 that touches the filesystem (loading contents, opening files, dragging,
 Quick Look, and the root-folder watchers).
 
+**A bookmark is only ever deleted on strong evidence, never a guess.**
+Failing to *start* a security scope isn't proof a folder is gone — an
+external drive or network share that isn't currently mounted, or a
+transient sandbox hiccup, fails the same way a genuinely deleted folder's
+bookmark never would (a deleted folder's bookmark still opens its scope
+fine; it's the subsequent `fileExists` check that correctly fails). So
+`FolderPersistence.restore()` and `ContentView.rootFolderExists(_:)` both
+only treat a bookmark as dead when `fileExists` comes back false *inside a
+successfully-opened scope* — anything else (an unreadable bookmark aside,
+which has nothing left to preserve) keeps the bookmark and keeps showing the
+folder, on the assumption that a later, real access attempt will get another
+chance to confirm or deny it. This was a deliberate correction: an earlier
+version of this logic treated any failed scope-open as equivalent to
+deletion, which risked silently and permanently forgetting a valid root
+folder — especially with Launch at Login now able to start FolderDrop before
+a network volume remounts.
+
 Because a security-scoped bookmark only exists for *root* folders, deleting a
 root folder in Finder (rather than the app) needs its own detection path — see
 [FolderWatcher](#folderwatcher-live-folder-refresh) above and
 `ContentView.pruneDeadRootFolders`/`handleRootFolderMaybeRemoved`, which drop a
 root from both `UserDefaults` and the in-memory list the moment its watcher
-(or a routine reload) confirms it no longer exists.
+(or a routine reload) *confirms* — not merely suspects — that it no longer
+exists.
 
 ---
 
@@ -218,3 +267,10 @@ refreshed every time the Settings window opens rather than cached, and
 "Restore Defaults" deliberately excludes it — resetting the three
 `UserDefaults`-backed preferences was requested; touching login-item
 registration was not.
+
+**About** holds no state of its own beyond the two confirmation dialogs for
+Check for Updates and Restore Defaults. Its GitHub Repository and Report an
+Issue rows are plain SwiftUI `Link` views pointing at this repository's real
+URLs — not custom URL-opening code — and rows with no real destination yet
+(like Website) are shown disabled rather than linking to an invented
+placeholder domain.

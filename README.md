@@ -26,6 +26,7 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
+- [Credits](#credits)
 - [License](#license)
 
 ---
@@ -39,6 +40,7 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 - [x] Finder-style multi-selection (click, ⌘-click, ⇧-click/⇧-arrow)
 - [x] Full keyboard navigation
 - [x] Live folder refresh (auto-updates when files change on disk)
+- [x] Automatic cleanup when a root folder is deleted or becomes unavailable
 - [x] Launch at Login
 - [x] Native Settings window
 - [x] Security-scoped bookmarks (persists folder access across launches)
@@ -61,7 +63,7 @@ FolderDrop browses the folders you point it at, and does nothing else.
 - Only accesses folders you explicitly grant access to through the native macOS file picker
 - Runs entirely locally
 
-See [docs/architecture.md](docs/architecture.md) for how folder access and persistence actually work under the hood.
+See [docs/architecture.md](docs/architecture.md) for how folder access and persistence actually work under the hood. Found a security or privacy issue? See [SECURITY.md](SECURITY.md) for how to report it.
 
 ---
 
@@ -195,6 +197,12 @@ Contributions are welcome. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for how to
 ## Changelog
 
 See **[CHANGELOG.md](CHANGELOG.md)** for a version-by-version summary of what's shipped, in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+
+---
+
+## Credits
+
+Created by [Shreyank Patil](https://github.com/Shreyank67). Built using SwiftUI and AppKit. Development assisted by ChatGPT and Claude.
 
 ---
 

@@ -148,6 +148,9 @@ Please use the repository's issue templates rather than a blank issue:
   a new capability or behavior change. Check
   [docs/roadmap.md](docs/roadmap.md) first to see if it's already planned.
 
+Found a security or privacy issue instead? Please don't open a public issue
+for it — see **[SECURITY.md](SECURITY.md)** for how to report it privately.
+
 ---
 
 ## License

@@ -16,6 +16,10 @@ Work remaining before the first public release candidate:
       [release-process.md](release-process.md))
 - [ ] Real screenshots and a hero GIF for the README
 - [x] `CONTRIBUTING.md`, `CHANGELOG.md`, and issue/PR templates finalized
+- [x] Pre-release security & privacy audit, including a full git-history
+      review for secrets and personal information
+- [x] Adopt a project-owned bundle identifier (`com.folderdrop.app`) ahead
+      of release
 - [ ] Continued UI polish passes, as needed (treated as an ongoing,
       incremental effort rather than a one-time pass)
 
@@ -66,6 +70,12 @@ built.
 - Live folder refresh — automatic reload on filesystem changes, no polling
 - Automatic cleanup of root folders deleted outside FolderDrop, with safe
   fallback to the root list if the active root disappears mid-session
+- Robust root-folder bookmark validation — a temporary access failure (an
+  external drive or network share not yet mounted, or a transient sandbox
+  hiccup) is no longer mistaken for the folder having been deleted
+- Automatic cleanup of orphaned drag-and-drop staging files left behind by a
+  previous run that quit, crashed, or didn't survive long enough for its own
+  delayed cleanup to run
 - Single-file drag-and-drop to Finder, Mail, Chrome, Slack, VS Code, ChatGPT
 - Multi-file drag-and-drop (native AppKit multi-item drag session, automatic
   stacked preview and count badge)
@@ -86,6 +96,8 @@ built.
   - Read-only keyboard shortcuts reference
   - Restore Defaults (with confirmation)
   - Check for Updates (placeholder)
+  - About page with working GitHub Repository and Report an Issue links,
+    plus License, Privacy, and Credits sections
 
 ---
 

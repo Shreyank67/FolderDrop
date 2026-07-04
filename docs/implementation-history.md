@@ -838,3 +838,214 @@ every file in `Models/` and `Services/`, and most files in `Views/`.
 Verified as a pure documentation change: every diff was an insertion with no
 lines removed or modified, and both Debug and Release builds succeeded
 unchanged.
+
+---
+
+## Open-Source Documentation Overhaul
+
+### Problem
+
+FolderDrop's README and docs had grown organically alongside the code (see
+every phase above) but had never been written *for* an outside reader —
+there was no CONTRIBUTING guide, no CHANGELOG, no issue/PR templates, and
+the README still read like a personal learning-project log rather than a
+project someone could land on cold and get productive with.
+
+### Solution
+
+**README rewrite.** Restructured around GitHub open-source conventions: a
+one-sentence pitch, a hero-GIF placeholder with explicit notes on what it
+should show, an implemented-only feature checklist, labeled screenshot
+placeholders, Installation/Building/Keyboard Shortcuts/Project Structure
+sections, and a condensed Roadmap — with the heavier technical material moved
+into `docs/` rather than duplicated inline.
+
+**New `docs/` structure.** Added `docs/architecture.md` (the *why* behind
+MenuBarExtra, folder hierarchy, FolderWatcher, selection, Quick Look, focus
+restoration, persistence, and settings — deliberately not a restatement of
+the code), `docs/roadmap.md` (RC1 Polish / Version 1.1 / Version 1.2 /
+Long-Term Ideas / Completed Features / Known Limitations), and
+`docs/release-process.md` (version bump through signing, notarization, and
+GitHub Release — with explicit placeholders where the process isn't
+exercised yet). `docs/IMPLEMENTATION_HISTORY.md` was replaced by this file,
+restructured into the Problem/Solution/Files Changed/Outcome format, with
+every existing phase's content preserved rather than summarized away.
+
+**Contributor infrastructure.** Expanded `CONTRIBUTING.md` with explicit
+Build Instructions, a Coding Style section, Commit Message Guidelines
+(documented against this project's actual git history rather than an
+invented convention), a Pull Request Checklist, and an Issue Reporting
+section. Added `CHANGELOG.md` in Keep a Changelog format, and
+`.github/ISSUE_TEMPLATE/bug_report.md` / `feature_request.md` /
+`PULL_REQUEST_TEMPLATE.md`, each cross-linking back to the roadmap and
+implementation history so duplicate or already-rejected proposals surface
+early. Added an MIT `LICENSE` file, which the app's own About page already
+claimed but the repository didn't yet contain.
+
+**Repository hygiene pass.** A first-time-visitor review caught several
+concrete issues: a placeholder `<your-org>` GitHub path left in clone
+commands and changelog links (replaced with the real repository), README/
+CONTRIBUTING build requirements that still said "macOS 13 / Xcode 15" when
+the project's actual deployment target is macOS 26 (per `project.pbxproj`),
+a broken internal cross-reference in the implementation history pointing at
+the wrong phase, an inconsistent heading-capitalization style in
+`architecture.md`, a missing Table of Contents in the now much longer
+README, and a personal Xcode scheme-state file
+(`xcuserdata/.../xcschememanagement.plist`) that had been committed before
+`.gitignore`'s `xcuserdata/` rule existed — untracked via `git rm --cached`
+without deleting it locally.
+
+### Files Changed
+
+`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` (new), `LICENSE` (new),
+`docs/architecture.md` (new), `docs/implementation-history.md` (replaces
+`docs/IMPLEMENTATION_HISTORY.md`), `docs/roadmap.md` (new),
+`docs/release-process.md` (new), `.github/ISSUE_TEMPLATE/bug_report.md` and
+`feature_request.md` (new), `.github/PULL_REQUEST_TEMPLATE.md` (new);
+`FolderDrop.xcodeproj/xcuserdata/.../xcschememanagement.plist` removed from
+tracking (not deleted from disk).
+
+### Outcome
+
+A repository that reads as a maintained open-source project rather than a
+personal changelog: a concise, navigable README backed by detailed `docs/`,
+a documented contribution process, and the standard GitHub scaffolding
+(license, changelog, issue/PR templates) a new contributor expects to find.
+
+---
+
+## Pre-Release Security & Privacy Audit
+
+### Problem
+
+Before making the repository public and eventually distributing built
+binaries, FolderDrop needed a critical, assume-nothing review — not just
+"does the code work," but whether anything in the codebase or its git
+history could leak personal information, over-request sandbox permissions,
+silently lose user data, or leave debug/temporary artifacts behind.
+
+### Solution
+
+**Full-repository audit.** Reviewed every Swift file, the generated sandbox
+entitlements from an actual signed build (not just the source-level
+`ENABLE_APP_SANDBOX` setting), and the *entire* git history — not just the
+working tree — for secrets, credentials, analytics/telemetry code, personal
+information, and leftover debug instrumentation. Confirmed: zero networking
+code anywhere (independently corroborated by the generated entitlements
+containing no network entitlement at all, meaning the sandbox itself would
+block it even if code tried), zero analytics/telemetry/crash-reporting,
+zero third-party dependencies, and no secrets or credentials in current
+files or historical commits. The two genuine personal-information findings
+— the developer's personal email address in git commit-author metadata, and
+a local macOS username baked into one historically-tracked (by then already
+untracked-going-forward) Xcode file — were judgment calls left to the
+maintainer rather than silently rewritten, since purging them requires a git
+history rewrite.
+
+**Startup cleanup of orphaned drag-and-drop staging files.** The audit
+identified that `FileDragModifier`'s staged temp copies (cleaned up via a
+delayed `DispatchQueue.main.asyncAfter`) would be orphaned forever if
+FolderDrop quit, crashed, or macOS restarted before that timer fired. Fixed
+by extracting the staging root path out of `FileDragModifier` into a new
+`DragStagingArea` service — the one place both drag staging and cleanup
+agree on the location — and adding `DragStagingArea.removeOrphanedFiles()`,
+called once from `FolderDropApp.init()` before any scene is built. Each
+leftover entry is removed independently via `try?`, so one failure doesn't
+stop the rest from being cleaned up, and a missing staging directory is
+silently treated as nothing to do. No polling, timers, or retry loops were
+added — the existing per-drag delayed cleanup is unchanged.
+
+**Bookmark validation correction.** The audit's most significant functional
+finding: both `FolderPersistence.restore()` and
+`ContentView.rootFolderExists(_:)` treated a failed
+`startAccessingSecurityScopedResource()` call as proof a root folder had
+been deleted. That conflated two different things — a folder that's
+genuinely gone typically still lets the security scope open fine (it's the
+subsequent `fileExists` check that correctly fails), whereas *starting* the
+scope itself can fail for reasons that have nothing to do with deletion: an
+external drive or network share not yet mounted, or a transient sandbox
+hiccup — especially plausible now that Launch at Login can start FolderDrop
+before such a volume remounts. Fixed by narrowing "delete this bookmark" down
+to exactly the case with real evidence (a successfully-opened scope followed
+by a confirmed-absent `fileExists`); every other outcome — including a
+resolvable bookmark whose scope merely fails to open — now preserves the
+bookmark and keeps showing the folder, rather than silently and permanently
+forgetting it. User-initiated removal (`removeRootFolder`) was left
+untouched, since that's explicit user intent, not an inference.
+
+**Bundle identifier change.** The audit flagged `shreyankpatil.FolderDrop`
+as tying the app's permanent identity to the developer's personal name
+rather than a project-owned identifier, and noted this was the right time
+to change it — before any public or notarized release — since changing it
+later would break existing users' `UserDefaults` and login-item
+registration. Changed to `com.folderdrop.app` in both Debug and Release
+build configurations.
+
+### Files Changed
+
+`FolderDrop/Services/DragStagingArea.swift` (new), `FolderDrop/Views/FileRowView.swift`,
+`FolderDrop/FolderDropApp.swift`, `FolderDrop/Services/FolderPersistence.swift`,
+`FolderDrop/ContentView.swift`, `FolderDrop.xcodeproj/project.pbxproj`.
+
+### Outcome
+
+No critical or actively exploitable issues were found — the sandbox
+entitlements were already minimal and correctly scoped (read-only, no
+network), and the codebase had no debug instrumentation, secrets, or
+third-party dependencies to begin with. The audit's concrete yield was three
+targeted fixes: orphaned drag-staging files are now cleaned up on every
+launch, a root folder on removable or network media is no longer permanently
+forgotten after a single transient access failure, and the app's identity is
+no longer tied to the developer's personal name. The full findings —
+including items intentionally left for the maintainer to decide, like the
+git-history residue — are not duplicated here; this phase records what
+changed as a result, not the complete audit report itself.
+
+---
+
+## About Page Redesign & Polish
+
+### Problem
+
+The About settings page had reserved space for project links since before
+the repository had a public URL to put in them, and its content (a combined
+"Project"/"Open Source"/"Created by" layout) didn't reflect the fact that
+FolderDrop was now genuinely open source with a real repository, issue
+tracker, license file, and documented privacy posture.
+
+### Solution
+
+**Initial redesign.** Restructured into clearly labeled sections: Links,
+License, Privacy, Maintenance (unchanged), and Credits. GitHub Repository
+and Report an Issue became live `Link` views pointing at this repository's
+actual URL and issue-template chooser — `.buttonStyle(.plain)` strips
+SwiftUI's default blue/underlined hyperlink look so they read as native
+System Settings rows rather than web links. Website had no real destination
+yet, so it became a disabled "Coming Soon" row rather than a hardcoded
+placeholder domain that doesn't exist. Discussions was checked against the
+repository's actual GitHub settings (via the API, confirming
+`has_discussions: false`) and left out entirely rather than added as a
+placeholder, since there's nothing to link even provisionally. License and
+Privacy became their own sections with the plain, factual statements
+requested; Credits carried over "Created by Shreyank Patil" and added
+"Built using SwiftUI and AppKit."
+
+**Polish pass.** A follow-up pass made three small corrections: reworded the
+header description ("frequently used folders" instead of "favorite
+folders"), removed the Donate row entirely rather than leaving another
+placeholder (a future support/donate platform will be added once one
+exists, the same way Website already works), and added one line to Credits
+— "Development assisted by ChatGPT and Claude." — worded as an
+acknowledgment of assistance, not a claim of authorship.
+
+### Files Changed
+
+`FolderDrop/Views/AboutSettingsView.swift`
+
+### Outcome
+
+Verified in a live, launched build (screenshots and the accessibility tree,
+not just reading the code) that the app icon, version, description, all
+Links rows, License, Privacy, Maintenance, and Credits render correctly in
+the existing native grouped-Form style. No other settings page or
+application behavior was touched.

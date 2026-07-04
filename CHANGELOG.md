@@ -12,7 +12,28 @@ the way — see [docs/implementation-history.md](docs/implementation-history.md)
 
 ## [Unreleased]
 
-Nothing yet — see [docs/roadmap.md](docs/roadmap.md) for what's planned.
+### Added
+
+- Startup cleanup of orphaned drag-and-drop staging files left behind by a
+  previous run that quit, crashed, or didn't survive long enough for its own
+  delayed cleanup to run.
+
+### Changed
+
+- Reorganized the About settings page into Links, License, Privacy, and
+  Credits sections. GitHub Repository and Report an Issue now link to this
+  project's real repository and issue tracker.
+- Changed the app's bundle identifier to `com.folderdrop.app` ahead of the
+  first public release.
+
+### Fixed
+
+- Root folders on external drives or network shares are no longer
+  permanently forgotten when a temporary access failure — most commonly the
+  volume not yet being mounted — is mistaken for the folder having been
+  deleted.
+
+See [docs/roadmap.md](docs/roadmap.md) for what's planned next.
 
 ## [1.0.0]
 
