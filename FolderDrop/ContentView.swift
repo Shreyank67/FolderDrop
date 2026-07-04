@@ -19,6 +19,7 @@ struct ContentView: View {
     /// starts from when nothing is active yet — never written from selectionState.
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
+    @State private var folderWatcher = FolderWatcher()
     /// Points at the exact NSWindow hosting this ContentView instance, kept
     /// current by WindowAccessor below, and used to restore key status once
     /// quickLookService reports Quick Look has closed. A reference type (see
@@ -139,6 +140,22 @@ struct ContentView: View {
                 return
             }
             quickLookService.show(entries: previewEntries(for: newEntry), activeEntry: newEntry, root: currentRoot)
+        }
+        .onChange(of: currentFolder) { _, newFolder in
+            updateFolderWatcher(for: newFolder)
+        }
+    }
+
+    /// Keeps exactly one live watcher pointed at whatever folder is currently
+    /// displayed. Called whenever currentFolder changes for any reason
+    /// (navigating in/out, restoring last session, removing the active root),
+    /// so ContentView never has to reason about filesystem monitoring itself —
+    /// it just reacts to FolderWatcher's change callback with reloadContents().
+    private func updateFolderWatcher(for folder: URL?) {
+        folderWatcher.stop()
+        guard let folder, let root = currentRoot else { return }
+        folderWatcher.start(folder: folder, root: root) {
+            reloadContents()
         }
     }
 
