@@ -20,6 +20,12 @@ struct ContentView: View {
     @State private var hoveredEntry: FolderEntry?
     @State private var quickLookService = QuickLookService()
     @State private var folderWatcher = FolderWatcher()
+    /// One watcher per root folder, always live regardless of navigation depth —
+    /// unlike folderWatcher (which only watches whatever's currently on screen),
+    /// these exist purely to catch a root folder itself being deleted/renamed/
+    /// moved (e.g. in Finder), even while browsing several levels beneath it or
+    /// while sitting at the top-level root list where nothing else is watched.
+    @State private var rootFolderWatchers: [URL: FolderWatcher] = [:]
     /// Points at the exact NSWindow hosting this ContentView instance, kept
     /// current by WindowAccessor below, and used to restore key status once
     /// quickLookService reports Quick Look has closed. A reference type (see
@@ -147,6 +153,9 @@ struct ContentView: View {
         .onChange(of: currentFolder) { _, newFolder in
             updateFolderWatcher(for: newFolder)
         }
+        .onChange(of: rootFolders) { _, newRootFolders in
+            syncRootFolderWatchers(newRootFolders)
+        }
     }
 
     /// Keeps exactly one live watcher pointed at whatever folder is currently
@@ -160,6 +169,51 @@ struct ContentView: View {
         folderWatcher.start(folder: folder, root: root) {
             reloadContents()
         }
+    }
+
+    /// Keeps one live FolderWatcher per root folder, independent of navigation
+    /// depth. Called whenever rootFolders changes for any reason (initial
+    /// restore, add, remove, or a root disappearing on its own) so a watcher
+    /// always exists for exactly the roots currently known, no more, no less.
+    private func syncRootFolderWatchers(_ currentRootFolders: [URL]) {
+        let current = Dictionary(uniqueKeysWithValues: currentRootFolders.map { ($0.standardizedFileURL, $0) })
+
+        for key in rootFolderWatchers.keys where current[key] == nil {
+            rootFolderWatchers[key]?.stop()
+            rootFolderWatchers.removeValue(forKey: key)
+        }
+
+        for (key, url) in current where rootFolderWatchers[key] == nil {
+            let watcher = FolderWatcher()
+            watcher.start(folder: url, root: url) {
+                handleRootFolderMaybeRemoved(url)
+            }
+            rootFolderWatchers[key] = watcher
+        }
+    }
+
+    /// Fires on any write/rename/delete event on a root folder's own file
+    /// descriptor. Most such events are harmless — e.g. a file dropped directly
+    /// into the root itself fires .write even though the root is unaffected —
+    /// so the actual existence check below is what decides whether this was a
+    /// real deletion. Only then do we tear down every piece of state that
+    /// referenced this root: persistence, the in-memory list (which in turn
+    /// stops this very watcher via syncRootFolderWatchers), and — if we were
+    /// browsing anywhere inside it, no matter how deep — the current navigation,
+    /// which falls back to the root list and stops the leaf folderWatcher via
+    /// the existing currentFolder onChange handler above.
+    private func handleRootFolderMaybeRemoved(_ url: URL) {
+        guard !rootFolderExists(url) else { return }
+
+        FolderPersistence.remove(url)
+        rootFolders.removeAll { $0.standardizedFileURL == url.standardizedFileURL }
+
+        if currentRoot?.standardizedFileURL == url.standardizedFileURL {
+            currentRoot = nil
+            currentFolder = nil
+        }
+
+        reloadContents()
     }
 
     /// Centralized keyboard shortcuts for the file list: Space toggles Quick Look,
@@ -379,7 +433,10 @@ struct ContentView: View {
             FocusDebugLog.appStateSnapshot(context: "AddFolder in panel.begin completion handler")
             #endif
             guard response == .OK, let url = panel.url else { return }
-            guard !rootFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) else { return }
+            guard !rootFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) else {
+                NSSound.beep()
+                return
+            }
 
             FolderPersistence.add(url)
             rootFolders.append(url)
@@ -457,12 +514,38 @@ struct ContentView: View {
         hoveredEntry = nil
 
         guard let folder = currentFolder else {
+            pruneDeadRootFolders()
             folderEntries = rootFolders
                 .map { FolderEntry(url: $0, isDirectory: true) }
                 .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
             return
         }
         folderEntries = loadFolderContents(from: folder)
+    }
+
+    /// Drops any root folder that's been deleted (or moved) outside FolderDrop —
+    /// e.g. in Finder — from both rootFolders and FolderPersistence. Runs every
+    /// time the root list is rebuilt (app launch, going back to the root list,
+    /// adding/removing a folder), not just once at launch: ContentView's @State
+    /// persists across MenuBarExtra open/close cycles within a single launch, so
+    /// FolderPersistence.restore()'s own validation at startup isn't enough to
+    /// catch a folder deleted mid-session.
+    private func pruneDeadRootFolders() {
+        let deadFolders = rootFolders.filter { !rootFolderExists($0) }
+        guard !deadFolders.isEmpty else { return }
+
+        for url in deadFolders {
+            FolderPersistence.remove(url)
+        }
+        rootFolders.removeAll { url in
+            deadFolders.contains { $0.standardizedFileURL == url.standardizedFileURL }
+        }
+    }
+
+    private func rootFolderExists(_ url: URL) -> Bool {
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+        return FileManager.default.fileExists(atPath: url.path)
     }
 
     private func loadFolderContents(from folder: URL) -> [FolderEntry] {
@@ -556,13 +639,21 @@ private struct BackButton: View {
             }
             .font(.callout)
             .foregroundStyle(isHovering ? Color(nsColor: .labelColor) : Color(nsColor: .secondaryLabelColor))
-            // Widens the clickable/hoverable target beyond the visible text without
-            // shifting layout — contentShape's inset only affects hit-testing, not
-            // the button's rendered frame or the surrounding VStack's spacing.
+            // Both the enlarged hit-testing shape AND the hover tracker must be
+            // declared on this exact label view, in this order. Button builds its
+            // own internal press gesture from the label's shape at the moment
+            // Button is constructed — a contentShape applied afterward, outside
+            // the label (as a previous attempt did, chained after .buttonStyle),
+            // is invisible to that internal gesture, even though a trailing
+            // .onHover at that same outer position *does* pick it up. That
+            // mismatch — click bound to the label's original small shape, hover
+            // bound to the outer enlarged one — is exactly why hover extended
+            // beyond where clicks registered. Declaring both here, on the same
+            // node, guarantees they read the identical shape.
             .contentShape(Rectangle().inset(by: -6))
+            .onHover { isHovering = $0 }
         }
         .buttonStyle(.plain)
-        .onHover { isHovering = $0 }
     }
 }
 
