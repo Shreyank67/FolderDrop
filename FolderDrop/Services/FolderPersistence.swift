@@ -31,9 +31,17 @@ enum FolderPersistence {
         saveBookmarks(bookmarks)
     }
 
-    /// Resolves every saved bookmark into a folder URL.
-    /// Bookmarks that no longer resolve or whose folder no longer exists are dropped.
-    /// Stale-but-valid bookmarks are transparently refreshed.
+    /// Resolves every saved bookmark into a folder URL. Only a bookmark whose
+    /// data is outright unreadable, or one we could actively confirm no
+    /// longer points at anything on disk, is dropped. Stale-but-valid
+    /// bookmarks are transparently refreshed.
+    ///
+    /// A bookmark we merely *couldn't check* right now — most commonly
+    /// because it lives on an external drive or network share that isn't
+    /// currently mounted, or a transient sandbox hiccup — is neither of
+    /// those things, and is kept and still returned as-is. See the
+    /// `startAccessingSecurityScopedResource()` branch below for why that
+    /// failure specifically isn't treated as evidence of deletion.
     static func restore() -> [URL] {
         var resolvedURLs: [URL] = []
         var bookmarksToKeep: [Data] = []
@@ -46,10 +54,23 @@ enum FolderPersistence {
                 relativeTo: nil,
                 bookmarkDataIsStale: &isStale
             ) else {
+                // The bookmark data itself is unreadable — nothing left to
+                // preserve or retry.
                 continue
             }
 
-            guard url.startAccessingSecurityScopedResource() else { continue }
+            guard url.startAccessingSecurityScopedResource() else {
+                // Failing to *start* access means the sandbox couldn't grant
+                // the scope right now — e.g. the volume isn't mounted yet —
+                // not that the folder is gone. A genuinely deleted folder's
+                // bookmark still grants access; it's the later fileExists
+                // check that would fail. Keep the bookmark and the folder
+                // untouched rather than guessing.
+                bookmarksToKeep.append(bookmark)
+                resolvedURLs.append(url)
+                continue
+            }
+
             let folderExists = FileManager.default.fileExists(atPath: url.path)
             url.stopAccessingSecurityScopedResource()
 

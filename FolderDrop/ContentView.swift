@@ -471,9 +471,18 @@ struct ContentView: View {
         }
     }
 
+    /// Used only to decide whether an automatic removal (pruneDeadRootFolders,
+    /// handleRootFolderMaybeRemoved) is justified — never for user-initiated
+    /// removal, which always honors the user's explicit choice regardless.
+    /// Failing to start the security scope is not evidence the folder is
+    /// gone (the same distinction FolderPersistence.restore() makes): an
+    /// external drive or network share that isn't currently mounted, or a
+    /// transient sandbox hiccup, will fail here too, and none of those mean
+    /// the folder no longer exists. Only a confirmed, in-scope fileExists
+    /// check counts as strong enough evidence to report "gone."
     private func rootFolderExists(_ url: URL) -> Bool {
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+        guard url.startAccessingSecurityScopedResource() else { return true }
+        defer { url.stopAccessingSecurityScopedResource() }
         return FileManager.default.fileExists(atPath: url.path)
     }
 
