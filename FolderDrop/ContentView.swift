@@ -85,7 +85,7 @@ struct ContentView: View {
                     Button {
                         selectFolder()
                     } label: {
-                        Label("Add Folder", systemImage: "folder.badge.plus")
+                        Label("Add Root Folder", systemImage: "folder.badge.plus")
                     }
                     .buttonStyle(.borderless)
                     .controlSize(.small)
@@ -95,17 +95,20 @@ struct ContentView: View {
                 VStack(spacing: 10) {
                     EmptyStateView(
                         systemImage: "folder.badge.plus",
-                        title: "No folders added yet",
-                        subtitle: "Add a folder to start browsing its files here."
+                        iconSize: 32,
+                        title: "No root folders added yet",
+                        subtitle: "Add a root folder to start browsing your files."
                     )
 
                     Button {
                         selectFolder()
                     } label: {
-                        Label("Add Folder", systemImage: "folder.badge.plus")
+                        Label("Add Root Folder", systemImage: "folder.badge.plus")
+                            .padding(.horizontal, 4)
                     }
-                    .buttonStyle(.borderless)
-                    .controlSize(.small)
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.regular)
                 }
                 .transition(.opacity)
             }
@@ -553,6 +556,10 @@ private struct BackButton: View {
             }
             .font(.callout)
             .foregroundStyle(isHovering ? Color(nsColor: .labelColor) : Color(nsColor: .secondaryLabelColor))
+            // Widens the clickable/hoverable target beyond the visible text without
+            // shifting layout — contentShape's inset only affects hit-testing, not
+            // the button's rendered frame or the surrounding VStack's spacing.
+            .contentShape(Rectangle().inset(by: -6))
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }

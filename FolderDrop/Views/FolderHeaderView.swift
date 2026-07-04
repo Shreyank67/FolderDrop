@@ -57,7 +57,7 @@ struct FolderHeaderView: View {
                     .foregroundStyle(Color(nsColor: .secondaryLabelColor))
                     .padding(.top, 2)
             } else {
-                Text("No folder selected")
+                Text("No root folder selected")
                     .foregroundStyle(.secondary)
             }
         }

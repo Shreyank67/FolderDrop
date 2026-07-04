@@ -10,13 +10,14 @@ import SwiftUI
 
 struct EmptyStateView: View {
     let systemImage: String
+    var iconSize: CGFloat = 28
     let title: String
     let subtitle: String
 
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: systemImage)
-                .font(.system(size: 28))
+                .font(.system(size: iconSize))
                 .foregroundStyle(Color(nsColor: .tertiaryLabelColor))
 
             Text(title)
