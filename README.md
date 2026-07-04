@@ -1,339 +1,162 @@
-## FolderDrop
+# FolderDrop
 
-A lightweight native macOS menu bar application that lets you browse and access files without opening Finder.
+A native macOS menu bar app for browsing, previewing, and dragging files without opening Finder.
 
-Built as a learning project in SwiftUI while recreating and extending the idea behind FolderPeek.
-P.S. Honestly I didnt want to pay for FolderPeek and thaught it'll be fun to build my own!
+FolderDrop lives in your menu bar and gives you instant access to the folders you use most — browse into subfolders, preview files with Quick Look, drag files straight into other apps, and jump around entirely from the keyboard. It's built for anyone who reaches for a handful of the same folders dozens of times a day and doesn't want a full Finder window every time. FolderDrop is free and open source, built natively with SwiftUI and AppKit.
 
----
+<!-- HERO GIF HERE -->
 
-## MVP Features
-
-- [X] Menu bar icon
-- [X] Folder picker
-- [X] File browser
-- [ ] Folder tree
-- [ ] Drag & Drop
-- [ ] Search
-- [ ] Open in Finder
-- [ ] Remember selected folders
-
-
-
-
-# Vision
-
-FolderDrop should make frequently accessed files instantly available from the macOS menu bar.
-
-Long-term goals include:
-
-- Browse folders
-- Drag files into any application
-- Search files
-- Quick previews
-- Multiple folders
-- Favorites
-- Recently opened files
-- Startup at login
+*Add a GIF showing:*
+- *opening FolderDrop*
+- *navigating folders*
+- *Quick Look*
+- *drag & drop*
 
 ---
 
-# Current Progress
+## Features
 
-## ✅ Phase 1 — Foundation
-
-- [x] Native SwiftUI Menu Bar application
-- [x] GitHub repository
-- [x] Project architecture
-- [x] README roadmap
-
----
-
-## ✅ Feature 1 — Menu Bar App
-
-### Goal
-
-Convert a standard macOS window application into a native MenuBarExtra utility.
-
-### Concepts Learned
-
-- SwiftUI App lifecycle
-- MenuBarExtra
-- Scenes
-- LSUIElement
-- Info.plist
-- SwiftUI App structure
-
-### Result
-
-- Folder icon appears in menu bar
-- No Dock icon
-- Window replaced with floating panel
+- [x] Multiple root folders
+- [x] Folder navigation with back/breadcrumb support
+- [x] Native Quick Look preview (single file or multi-selection)
+- [x] Native drag & drop (single and multi-file, to Finder, Mail, Chrome, Slack, VS Code, and more)
+- [x] Finder-style multi-selection (click, ⌘-click, ⇧-click/⇧-arrow)
+- [x] Full keyboard navigation
+- [x] Live folder refresh (auto-updates when files change on disk)
+- [x] Launch at Login
+- [x] Native Settings window
+- [x] Security-scoped bookmarks (persists folder access across launches)
+- [x] Menu bar application (no Dock icon, no regular window)
 
 ---
 
-## ✅ Feature 2 — Folder Picker
+## Screenshots
 
-### Goal
+<!-- Screenshot: Empty State -->
 
-Allow the user to choose a folder using the native macOS picker.
+*Description: The onboarding screen shown when no root folders have been added yet.*
 
-### Concepts Learned
+<!-- Screenshot: Root Folders -->
 
-- @State
-- URL
-- NSOpenPanel
-- Optional Binding
-- AppKit + SwiftUI
+*Description: The top-level list of root folders added to FolderDrop.*
 
-### Result
+<!-- Screenshot: Folder Contents -->
 
-- Select Folder button
-- Native folder picker
-- Folder name displayed
-- Folder path displayed
+*Description: Browsing inside a folder, showing files and subfolders with native icons.*
 
----
+<!-- Screenshot: Settings — General -->
 
-## ✅ Feature 3 — Folder Browser
+*Description: The General settings page — Launch at Login, Quick Look, restore last folder, drag cleanup delay.*
 
-### Goal
+<!-- Screenshot: Settings — Hotkeys -->
 
-Display the contents of the selected folder.
+*Description: The Hotkeys settings page listing all keyboard shortcuts.*
 
-### Concepts Learned
+<!-- Screenshot: Settings — About -->
 
-- FileManager
-- Directory enumeration
-- List
-- ForEach
-- Identifiable
-- Security Scoped Resources
-- File sorting
+*Description: The About settings page — app info, project links, and maintenance actions.*
 
-### Result
+<!-- Screenshot: Quick Look Preview -->
 
-- Folder contents displayed
-- Folders first
-- Files second
-- Alphabetical sorting
-- Scrollable list
+*Description: Quick Look previewing a selected file directly from FolderDrop.*
 
 ---
 
-### ✅ Folder Navigation
+## Installation
 
-- Navigate into subfolders
-- Navigate back to parent folders
-- Root folder remains unchanged
-- Change Folder resets navigation
+### Download
 
----
+> Prebuilt release binaries aren't published yet. Check the [Releases](../../releases) page once the first tagged release is out.
 
-### ✅ Open Files
+### Build from Source
 
-Clicking a file opens it using the default macOS application.
+See [Building](#building) below.
 
-Examples:
+### Homebrew
 
-- PDF → Preview
-- PNG → Preview
-- SVG → Affinity Designer (or system default)
-- Text → TextEdit
-- ZIP → Archive Utility
+> Not yet available. A `brew install --cask folderdrop` formula is planned once versioned releases exist — see [docs/roadmap.md](docs/roadmap.md).
 
 ---
 
-### ✅ Native macOS File Icons
+## Building
 
-Uses Finder's native file and folder icons through `NSWorkspace`.
+FolderDrop is a standard Xcode project — no external dependencies or package managers are involved.
 
-The application automatically displays the correct icon for:
+**Requirements:**
+- macOS 13 or later
+- Xcode 15 or later
 
-- Folders
-- Documents
-- Images
-- Archives
-- Applications
-- Any registered macOS file type
+**Steps:**
 
----
+```bash
+git clone https://github.com/<your-org>/FolderDrop.git
+cd FolderDrop
+open FolderDrop.xcodeproj
+```
 
-### ✅ UI Improvements
+Then build and run with `⌘R`. FolderDrop is sandboxed (`ENABLE_APP_SANDBOX = YES`); the first time you add a folder, macOS will prompt for access, and FolderDrop persists that access using a security-scoped bookmark (see [docs/architecture.md](docs/architecture.md)).
 
-Recent UI polish includes:
+To build from the command line instead:
 
-- Native folder icon in the header
-- Compact Finder-style parent path
-- Improved typography hierarchy
-- Better row spacing
-- Reduced list indentation
-- Larger scrolling area
-- Improved overall spacing and alignment
+```bash
+xcodebuild -project FolderDrop.xcodeproj -scheme FolderDrop -configuration Debug build
+```
 
 ---
 
-### ✅ Root Folder Management
-- Add multiple root folders
-- Persist folders using security-scoped bookmarks
-- Restore folders on launch
-- Prevent duplicate folders
-- Remove root folders
-- Native context menu
-- Reveal root folder in Finder
+## Keyboard Shortcuts
 
--------------------------------------   *   *   *   -------------------------------- 
-
-## Roadmap
-
-### ✅ Phase 1 — Foundation
-
-- [x] Menu Bar Application
-- [x] Folder Picker
-- [x] Folder Browser
-- [x] Folder Navigation
-- [x] Open Files
-- [x] Native File Icons
-- [x] UI Polish
+| Shortcut | Action |
+|---|---|
+| `↑` `↓` | Navigate |
+| `⇧` + `↑` `↓` | Extend selection |
+| `⌘` + Click | Multi-select |
+| `⌘A` | Select all |
+| `⌘⇧A` | Deselect all |
+| `Esc` | Back |
+| `Space` | Quick Look |
+| `Enter` | Open file / navigate into folder |
 
 ---
-
-### 🚧 Phase 2 — Core Features
-
-- [X] Folder Persistence
-- [ ] Drag & Drop Support
-- [X] Reveal File in Finder
-- [X] Context Menu
-
----
-
-### 📅 Phase 3 — Productivity
-
-- [ ] Search
-- [ ] Favorites
-- [ ] Recent Folders
-- [ ] Keyboard Shortcuts
-- [ ] Quick Look Preview
-
----
-
-### ✨ Phase 4 — Polish
-
-- [ ] Launch at Login
-- [ ] Settings Window
-- [ ] Multiple Folder Support
-- [ ] Performance Improvements
-- [ ] Accessibility Improvements
-
----
-
-## Technologies
-
-- Swift
-- SwiftUI
-- AppKit
-- NSWorkspace
-- NSOpenPanel
-- FileManager
-- Xcode
-- Git
-- GitHub
-
-
--------------------------------------   *   *   *   -------------------------------- 
 
 ## Project Structure
 
 ```
 FolderDrop/
-│
-├── FolderDropApp.swift
-├── ContentView.swift
-│
-├── Models/
-│   ├── FolderEntry.swift
-│   └── FolderNavigation.swift
-│
-├── Services/
-│   ├── FolderContentsLoader.swift
-│   └── FileIconProvider.swift
-│
-└── Views/
-    ├── FolderHeaderView.swift
-    ├── FileListView.swift
-    └── FileRowView.swift
+├── FolderDropApp.swift      # App entry point (MenuBarExtra + Settings scene)
+├── ContentView.swift        # Root view — owns navigation/selection state
+├── Models/                  # Data shapes and pure navigation/selection logic
+├── Services/                # macOS API bridges (filesystem, persistence, Quick Look, login items)
+└── Views/                   # Stateless UI components
 ```
-The project follows a simple separation of responsibilities.
 
-- **Models** → Application data
-- **Views** → UI components
-- **Services** → macOS APIs and file system operations
-- **ContentView** → Coordinates state and user interactions
+Models hold data and pure logic, Services wrap macOS/AppKit APIs behind small focused interfaces, and Views are stateless — they receive data and callbacks from `ContentView`, which is the single place app-wide state and behavior are coordinated.
+
+For a deeper explanation of *why* the architecture looks like this — MenuBarExtra, FolderWatcher, selection, Quick Look, persistence, settings, and security-scoped bookmarks — see **[docs/architecture.md](docs/architecture.md)**.
 
 ---
 
-## Current Architecture (Mental Model)
+## Roadmap
 
-MenuBarExtra
-        │
-        ▼
-   ContentView
-        │
-        ├──────────────┐
-        │              │
-        ▼              ▼
- Folder UI      Navigation
-        │
-        ▼
- FolderContentsLoader
-        │
-        ▼
- FileManager
+**Coming Soon**
+- Wire "Check for Updates" to a real updater
+- Search/filter within the current folder
 
+**Future Ideas**
+- Finder Sync extension for deeper Finder integration
+- Custom/remappable keyboard shortcuts
+- Folder favorites/pinning
 
-## Supporting services:
+Full details, including completed work, live in **[docs/roadmap.md](docs/roadmap.md)**.
 
-FolderPersistence
+---
 
-↓
+## Contributing
 
-Security Bookmarks
+Contributions are welcome. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for how to get set up and what to expect from a pull request.
 
-↓
+---
 
-UserDefaults
+## License
 
-
-## Supporting views:
-
-FileListView
-
-↓
-
-RootFolderRow
-
-↓
-
-FileRowView
-
--------------------------------------   *   *   *   -------------------------------- 
-
-# Development Journal
-
-### 2026-06-25
-
-- Created SwiftUI macOS project
-- Converted app into MenuBarExtra
-- Learned Git + GitHub workflow
-- Implemented folder picker
-- Implemented folder browser
-
-
-### 2026-07-01
-
-- changed workflow (ChatGPT, Claude Code, VS Code)
-- Added new features
-- Made UI improvements
-- Implemented folder persistent
-- Implemented multipal folder support
-- Implemented root folder context menu and removal
+FolderDrop is released under the **MIT License**. See [LICENSE](LICENSE) for the full text.
