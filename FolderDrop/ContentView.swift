@@ -133,9 +133,6 @@ struct ContentView: View {
             // it's open, or Escape closing it natively — so it's wired once here
             // rather than duplicated at every call site that can close it.
             quickLookService.onClose = { [focusRestoration] in
-                #if DEBUG
-                FocusDebugLog.logWindowHierarchy(context: "immediately after Quick Look closed (before any mouse interaction)")
-                #endif
                 focusRestoration.restore()
             }
         }
@@ -231,11 +228,6 @@ struct ContentView: View {
         }
 
         Self.keyboardShortcutsMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            // DEBUG-INSTRUMENTATION: every keyDown that reaches this monitor.
-            #if DEBUG
-            FocusDebugLog.key("reached monitor: keyCode=\(event.keyCode) modifierFlags=\(event.modifierFlags.rawValue)")
-            #endif
-
             let isExtending = event.modifierFlags.contains(.shift)
 
             switch event.keyCode {
@@ -262,33 +254,15 @@ struct ContentView: View {
             }
 
             guard let entry = selectionState.activeEntry else {
-                #if DEBUG
-                if event.keyCode == 49 {
-                    FocusDebugLog.key("Space received but no active entry -> returning event (passthrough)")
-                }
-                #endif
                 return event
             }
 
             switch event.keyCode {
             case 49: // Space
-                // DEBUG-INSTRUMENTATION: full trace of Space handling, since this is
-                // the key implicated in the Quick Look focus-chain investigation.
-                #if DEBUG
-                FocusDebugLog.key("Space received: keyCode=49 modifierFlags=\(event.modifierFlags.rawValue) entry=\(entry.url.lastPathComponent) isDirectory=\(entry.isDirectory) isQuickLookEnabled=\(isQuickLookEnabled)")
-                FocusDebugLog.appStateSnapshot(context: "before Space handling")
-                #endif
                 guard !entry.isDirectory, isQuickLookEnabled else {
-                    #if DEBUG
-                    FocusDebugLog.key("Space: guard failed (isDirectory or QuickLook disabled) -> returning event (passthrough)")
-                    #endif
                     return event
                 }
                 quickLookService.toggle(entries: previewEntries(for: entry), activeEntry: entry, root: currentRoot)
-                #if DEBUG
-                FocusDebugLog.key("Space: quickLookService.toggle() called -> returning nil (consumed)")
-                FocusDebugLog.appStateSnapshot(context: "after Space handling")
-                #endif
                 return nil
             case 36, 76: // Return, keypad Enter
                 if entry.isDirectory {
@@ -393,22 +367,7 @@ struct ContentView: View {
     }
 
     private func selectFolder() {
-        // DEBUG-INSTRUMENTATION: timing/window-state trace for the Add Folder /
-        // NSOpenPanel lag investigation.
-        #if DEBUG
-        let buttonPressedAt = Date()
-        FocusDebugLog.focusChain("[AddFolder] button pressed at \(buttonPressedAt.timeIntervalSinceReferenceDate)")
-        FocusDebugLog.appStateSnapshot(context: "AddFolder pressed, before creating NSOpenPanel")
-        FocusDebugLog.logWindowHierarchy(context: "AddFolder pressed, before creating NSOpenPanel")
-        #endif
-
         let panel = NSOpenPanel()
-
-        #if DEBUG
-        let panelCreatedAt = Date()
-        FocusDebugLog.focusChain("[AddFolder] NSOpenPanel() created, elapsed since press: \(panelCreatedAt.timeIntervalSince(buttonPressedAt))s")
-        #endif
-
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -420,18 +379,7 @@ struct ContentView: View {
         // app is genuinely active, not just key-windowed.
         NSApp.activate()
 
-        #if DEBUG
-        let beforeBeginAt = Date()
-        FocusDebugLog.focusChain("[AddFolder] calling panel.begin(completionHandler:), elapsed since creation: \(beforeBeginAt.timeIntervalSince(panelCreatedAt))s")
-        FocusDebugLog.appStateSnapshot(context: "AddFolder immediately before panel.begin()")
-        #endif
-
         panel.begin { response in
-            #if DEBUG
-            let dismissedAt = Date()
-            FocusDebugLog.focusChain("[AddFolder] completion handler fired, elapsed since begin() was called: \(dismissedAt.timeIntervalSince(beforeBeginAt))s, response=\(response == .OK ? "OK" : "Cancel")")
-            FocusDebugLog.appStateSnapshot(context: "AddFolder in panel.begin completion handler")
-            #endif
             guard response == .OK, let url = panel.url else { return }
             guard !rootFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) else {
                 NSSound.beep()
@@ -441,50 +389,7 @@ struct ContentView: View {
             FolderPersistence.add(url)
             rootFolders.append(url)
             reloadContents()
-
-            #if DEBUG
-            let doneAt = Date()
-            FocusDebugLog.focusChain("[AddFolder] reloadContents() finished, elapsed since dismissal: \(doneAt.timeIntervalSince(dismissedAt))s")
-            #endif
         }
-
-        #if DEBUG
-        // R-investigation: dump the panel's view hierarchy (to find exactly which
-        // view is the sidebar) and its first responder shortly after presentation,
-        // then poll for first-responder changes until the panel is dismissed — the
-        // sidebar is a private AppKit view we can't subclass or hook directly, so
-        // detecting the responder change after clicking the path popup requires
-        // watching for it rather than intercepting the click itself.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            FocusDebugLog.focusChain("[AddFolder] === NSOpenPanel view hierarchy dump ===")
-            if let contentView = panel.contentView {
-                FocusDebugLog.dumpViewHierarchy(contentView)
-            }
-            FocusDebugLog.logResponderState(context: "AddFolder shortly after presentation", window: panel)
-
-            var lastResponderDescription = String(describing: panel.firstResponder)
-            var pollTimer: Timer?
-            pollTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { timer in
-                guard panel.isVisible else {
-                    FocusDebugLog.focusChain("[AddFolder] panel no longer visible, stopping first-responder poll")
-                    timer.invalidate()
-                    return
-                }
-                let currentDescription = String(describing: panel.firstResponder)
-                if currentDescription != lastResponderDescription {
-                    FocusDebugLog.focusChain("[AddFolder] firstResponder changed:\n  from: \(lastResponderDescription)\n  to:   \(currentDescription)")
-                    FocusDebugLog.logResponderState(context: "AddFolder firstResponder changed", window: panel)
-                    lastResponderDescription = currentDescription
-                }
-            }
-            _ = pollTimer
-        }
-        #endif
-
-        #if DEBUG
-        let beginReturnedAt = Date()
-        FocusDebugLog.focusChain("[AddFolder] panel.begin() call returned to caller, elapsed since call: \(beginReturnedAt.timeIntervalSince(beforeBeginAt))s (should be ~0 if truly non-blocking)")
-        #endif
     }
 
     private func navigateIntoFolder(_ entry: FolderEntry) {

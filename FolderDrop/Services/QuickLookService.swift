@@ -56,21 +56,11 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
     /// decides whether that means opening it, switching to different content, or
     /// closing it. Folders never open the panel.
     func toggle(entries: [FolderEntry], activeEntry: FolderEntry, root: URL?) {
-        // DEBUG-INSTRUMENTATION: trace every toggle() call and which branch it takes.
-        #if DEBUG
-        Self.debugLogPanelState(context: "toggle() entry", isPanelOpen: isPanelOpen, previewedURL: activeEntry.url)
-        #endif
         guard !activeEntry.isDirectory, !entries.isEmpty else { return }
 
         if isPanelOpen && previewItems == entries.map(\.url) {
-            #if DEBUG
-            FocusDebugLog.quickLook("toggle() -> panel already open with same entries, calling close()")
-            #endif
             close()
         } else {
-            #if DEBUG
-            FocusDebugLog.quickLook("toggle() -> calling show()")
-            #endif
             show(entries: entries, activeEntry: activeEntry, root: root)
         }
     }
@@ -81,11 +71,6 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
     /// root bookmark, so one open/close bracket on root covers all of them exactly
     /// as it already did for a single file.
     func show(entries: [FolderEntry], activeEntry: FolderEntry, root: URL?) {
-        // DEBUG-INSTRUMENTATION: trace show() calls and panel/app state before/after.
-        #if DEBUG
-        Self.debugLogPanelState(context: "show() entry", isPanelOpen: isPanelOpen, previewedURL: activeEntry.url)
-        FocusDebugLog.appStateSnapshot(context: "before opening Quick Look (show())")
-        #endif
         guard !activeEntry.isDirectory, !entries.isEmpty, let panel = QLPreviewPanel.shared() else { return }
         observePanelDidResignKey(panel)
 
@@ -104,24 +89,10 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
         panel.reloadData()
         panel.currentPreviewItemIndex = currentIndex
         panel.makeKeyAndOrderFront(nil)
-
-        #if DEBUG
-        Self.debugLogPanelState(context: "show() exit", isPanelOpen: isPanelOpen, previewedURL: activeEntry.url)
-        #endif
     }
 
     func close() {
-        // DEBUG-INSTRUMENTATION: trace close() calls and panel/app state before/after.
-        #if DEBUG
-        Self.debugLogPanelState(context: "close() entry", isPanelOpen: isPanelOpen, previewedURL: previewItems.indices.contains(currentIndex) ? previewItems[currentIndex] : nil)
-        FocusDebugLog.appStateSnapshot(context: "before closing Quick Look (close())")
-        #endif
-        guard isPanelOpen else {
-            #if DEBUG
-            FocusDebugLog.quickLook("close() -> isPanelOpen already false, no-op")
-            #endif
-            return
-        }
+        guard isPanelOpen else { return }
         isPanelOpen = false
         root?.stopAccessingSecurityScopedResource()
         root = nil
@@ -129,10 +100,6 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
         currentIndex = 0
 
         QLPreviewPanel.shared()?.close()
-
-        #if DEBUG
-        Self.debugLogPanelState(context: "close() exit", isPanelOpen: isPanelOpen, previewedURL: nil)
-        #endif
         // onClose fires from handlePanelDidResignKey() once AppKit actually
         // confirms the key-status transition, not synchronously from here.
     }
@@ -155,11 +122,6 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
     /// Never touches selection — closing Quick Look this way or via close() both
     /// leave SelectionState completely untouched, so selection is always preserved.
     func previewPanelWillClose(_ panel: QLPreviewPanel!) {
-        // DEBUG-INSTRUMENTATION: native close path (Escape, panel losing key status).
-        #if DEBUG
-        FocusDebugLog.quickLook("previewPanelWillClose() called (native close path)")
-        Self.debugLogPanelState(context: "previewPanelWillClose() entry", isPanelOpen: isPanelOpen, previewedURL: nil)
-        #endif
         guard isPanelOpen else { return }
         isPanelOpen = false
         root?.stopAccessingSecurityScopedResource()
@@ -193,24 +155,6 @@ final class QuickLookService: NSObject, QLPreviewPanelDataSource, QLPreviewPanel
     /// a real close from an unrelated key-status change.
     private func handlePanelDidResignKey() {
         guard !isPanelOpen else { return }
-        #if DEBUG
-        Self.debugLogPanelState(context: "handlePanelDidResignKey() -> firing onClose", isPanelOpen: isPanelOpen, previewedURL: nil)
-        #endif
         onClose?()
     }
-
-    // MARK: - DEBUG-INSTRUMENTATION
-
-    #if DEBUG
-    private static func debugLogPanelState(context: String, isPanelOpen: Bool, previewedURL: URL?) {
-        let panel = QLPreviewPanel.shared()
-        FocusDebugLog.quickLook("""
-        [\(context)] previewedURL=\(previewedURL?.path ?? "nil") \
-        isPanelOpen=\(isPanelOpen) \
-        panel.isVisible=\(panel?.isVisible ?? false) \
-        panel.isKeyWindow=\(panel?.isKeyWindow ?? false) \
-        panel.isMainWindow=\(panel?.isMainWindow ?? false)
-        """)
-    }
-    #endif
 }
