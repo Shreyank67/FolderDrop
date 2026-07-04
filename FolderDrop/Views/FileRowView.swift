@@ -179,8 +179,7 @@ private struct FileDragModifier: ViewModifier {
         let didAccess = root?.startAccessingSecurityScopedResource() ?? false
         defer { if didAccess { root?.stopAccessingSecurityScopedResource() } }
 
-        let stagingDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FolderDropDrag", isDirectory: true)
+        let stagingDirectory = DragStagingArea.rootDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let stagedURL = stagingDirectory.appendingPathComponent(url.lastPathComponent)
 

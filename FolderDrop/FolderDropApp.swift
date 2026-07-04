@@ -15,6 +15,12 @@ import SwiftUI
 /// to target.
 @main
 struct FolderDropApp: App {
+    init() {
+        // Runs once per launch, before any UI is shown, so it can never race
+        // a drag the user hasn't started yet.
+        DragStagingArea.removeOrphanedFiles()
+    }
+
     var body: some Scene {
         MenuBarExtra("FolderDrop", image: "MenuIcon") {
             ContentView()
