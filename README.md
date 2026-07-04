@@ -14,6 +14,21 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 
 ---
 
+## Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Installation](#installation)
+- [Building](#building)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Project Structure](#project-structure)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Changelog](#changelog)
+- [License](#license)
+
+---
+
 ## Features
 
 - [x] Multiple root folders

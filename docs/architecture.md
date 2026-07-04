@@ -37,7 +37,7 @@ specifically because of this.
 
 ---
 
-## Folder hierarchy & navigation
+## Folder Hierarchy & Navigation
 
 `ContentView` tracks three pieces of state to represent "where the user is":
 
@@ -144,11 +144,11 @@ previewed files.
 
 Quick Look temporarily owns keyboard focus, which FolderDrop's borderless
 panel doesn't automatically get back once Quick Look closes — see
-[Focus restoration](#focus-restoration) below.
+[Focus Restoration](#focus-restoration) below.
 
 ---
 
-## Focus restoration
+## Focus Restoration
 
 `FocusRestoration` exists to solve one narrow problem: `MenuBarExtra`'s
 backing window is a non-activating auxiliary panel, and AppKit does not
@@ -162,7 +162,7 @@ that Quick Look has actually resigned key status.
 
 ---
 
-## Persistence & security-scoped bookmarks
+## Persistence & Security-Scoped Bookmarks
 
 Sandboxed apps lose filesystem access to a user-chosen location the instant
 the process that received it (here, `NSOpenPanel`) exits. A security-scoped
