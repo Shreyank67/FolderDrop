@@ -54,7 +54,9 @@ built.
   - Configurable drag-cleanup delay (30/60/120s)
   - Read-only keyboard shortcuts reference
   - Restore Defaults (with confirmation)
-  - Check for Updates (placeholder)
+  - View Latest Release (opens the GitHub releases page; no automatic
+    version checking yet)
+  - Quit FolderDrop (immediate, no confirmation)
   - About page with working GitHub Repository and Report an Issue links,
     plus License, Privacy, and Credits sections
 - Pre-release security & privacy audit, including a full git-history review
@@ -98,7 +100,9 @@ Planned improvements, not yet started unless noted otherwise:
 - [ ] Sorting options (date modified, size, kind, etc. — currently
       alphabetical only)
 - [ ] Improved Quick Look behavior (fullscreen focus-restoration edge case)
-- [ ] Wire "Check for Updates" to a real updater (Sparkle or equivalent)
+- [ ] Automatic update checking (Sparkle or equivalent) — "View Latest
+      Release" currently only opens the GitHub releases page manually, with
+      no in-app version comparison or notification
 - [ ] Search/filter within the current folder's contents
 - [ ] Homebrew Cask formula
 - [ ] Additional quality-of-life improvements, as they come up
@@ -137,8 +141,9 @@ Features that don't exist yet. For bugs in behavior that *is* implemented, see
 - No search or filtering within a folder's contents
 - No Finder Sync extension (badges/context menu integration inside Finder
   itself)
-- No real update mechanism — "Check for Updates" is a placeholder alert, not
-  a Sparkle (or equivalent) integration
+- No automatic update mechanism — "View Latest Release" opens the GitHub
+  releases page manually; there's no in-app version check, notification, or
+  Sparkle (or equivalent) integration yet
 - Keyboard shortcuts are fixed — not user-remappable
 - No drag-and-drop *into* FolderDrop (only outbound drag is implemented)
 - No folder reordering or favorites/pinning

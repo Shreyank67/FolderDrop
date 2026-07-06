@@ -185,7 +185,7 @@ For a deeper explanation of *why* the architecture looks like this — MenuBarEx
 - Folder drag & drop support
 - Sorting options (date modified, size, kind, etc.)
 - Improved Quick Look behavior (fullscreen focus restoration)
-- Wire "Check for Updates" to a real updater
+- Automatic update checking (View Latest Release currently only opens the GitHub releases page manually)
 - Search/filter within the current folder
 
 **Future Ideas**

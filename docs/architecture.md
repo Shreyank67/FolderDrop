@@ -268,9 +268,16 @@ refreshed every time the Settings window opens rather than cached, and
 `UserDefaults`-backed preferences was requested; touching login-item
 registration was not.
 
-**About** holds no state of its own beyond the two confirmation dialogs for
-Check for Updates and Restore Defaults. Its GitHub Repository and Report an
-Issue rows are plain SwiftUI `Link` views pointing at this repository's real
-URLs — not custom URL-opening code — and rows with no real destination yet
-(like Website) are shown disabled rather than linking to an invented
-placeholder domain.
+**About** holds no state of its own beyond the confirmation dialog for
+Restore Defaults. Its GitHub Repository and Report an Issue rows are plain
+SwiftUI `Link` views pointing at this repository's real URLs — not custom
+URL-opening code — and rows with no real destination yet (like Website) are
+shown disabled rather than linking to an invented placeholder domain. View
+Latest Release, by contrast, calls `NSWorkspace.shared.open(_:)` directly
+rather than using `Link`, matching how the Quit action below it calls
+`NSApp.terminate(nil)` directly — both are one-shot native API calls rather
+than navigable destinations, so neither needed `Link`'s affordances.
+
+A final, visually separate section holds Quit — `NSApp.terminate(nil)`,
+with no confirmation, since MenuBarExtra apps have no menu-bar-driven Cmd-Q
+to fall back on and Activity Monitor was otherwise the only way to quit.

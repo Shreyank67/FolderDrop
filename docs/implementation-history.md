@@ -1130,3 +1130,48 @@ Every currently-known bug has one canonical, honest description that both
 the README and `docs/roadmap.md` link to, instead of being scattered across
 conversations or left completely undocumented. No source code was changed
 in this phase — it is documentation only.
+
+---
+
+## Quit Action & Update-Checker Replacement
+
+### Problem
+
+Two release-blocking gaps surfaced during pre-release review. First,
+FolderDrop had no user-facing way to quit at all — as a `MenuBarExtra`
+accessory app it has no application menu bar to carry a Cmd-Q shortcut, so
+Force Quit / Activity Monitor was the only option, which is a poor
+experience for non-technical users. Second, "Check for Updates…" always
+displayed a hardcoded "You're up to date" alert regardless of the installed
+version — actively misleading rather than merely incomplete.
+
+### Solution
+
+**Quit.** Added a new, visually separate `Form` `Section` at the bottom of
+`AboutSettingsView` (after Credits) containing a single
+`Label("Quit FolderDrop", systemImage: "power")` button that calls
+`NSApp.terminate(nil)` directly. No confirmation dialog, by design — Quit is
+expected to be immediate, the same way the system's own Quit menu item
+behaves.
+
+**Update checker.** Removed the `showsUpToDateAlert` state and its
+`.alert(...)` entirely — there is no fake "up to date" claim left anywhere
+in the app. The Maintenance section's button was renamed to
+"View Latest Release" and now calls `NSWorkspace.shared.open(_:)` directly
+against this repository's GitHub releases URL, rather than performing any
+version comparison. This is a deliberately honest placeholder: it gets the
+user to the right page manually rather than claiming a capability
+(automatic version checking) FolderDrop doesn't have yet.
+
+### Files Changed
+
+`FolderDrop/Views/AboutSettingsView.swift`
+
+### Outcome
+
+FolderDrop can be quit from its own UI for the first time. The About page no
+longer makes any claim about being up to date — "View Latest Release" is
+honest about being a manual link, and automatic update checking (Sparkle or
+equivalent) remains tracked as unstarted work in
+[roadmap.md](roadmap.md#version-11). Verified with a full Debug build
+(`xcodebuild`); no other view or application behavior was touched.

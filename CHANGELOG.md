@@ -22,11 +22,19 @@ the way — see [docs/implementation-history.md](docs/implementation-history.md)
   fullscreen apps, DaVinci Resolve drag staging, no folder drag, alphabetical-
   only sorting, Settings window fullscreen-Space behavior, and a minor Back
   button hit-testing inconsistency).
+- A "Quit FolderDrop" action on the About settings page — previously the
+  only way to quit was Force Quit / Activity Monitor, since MenuBarExtra
+  apps have no menu-bar-driven Cmd-Q to fall back on.
 
 ### Changed
 
 - Replaced the placeholder SF Symbol menu bar icon and default app icon with
   FolderDrop's own custom icon.
+- Replaced the "Check for Updates…" button, which always claimed the app
+  was up to date regardless of the installed version, with "View Latest
+  Release," which opens this project's GitHub releases page. Automatic
+  version checking is not yet implemented — see
+  [docs/roadmap.md](docs/roadmap.md).
 - Reorganized the About settings page into Links, License, Privacy, and
   Credits sections. GitHub Repository and Report an Issue now link to this
   project's real repository and issue tracker.
