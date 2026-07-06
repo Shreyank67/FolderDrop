@@ -17,9 +17,16 @@ the way — see [docs/implementation-history.md](docs/implementation-history.md)
 - Startup cleanup of orphaned drag-and-drop staging files left behind by a
   previous run that quit, crashed, or didn't survive long enough for its own
   delayed cleanup to run.
+- A documented Known Limitations list ([docs/known-limitations.md](docs/known-limitations.md)),
+  covering current bugs in shipped behavior (Quick Look focus loss in some
+  fullscreen apps, DaVinci Resolve drag staging, no folder drag, alphabetical-
+  only sorting, Settings window fullscreen-Space behavior, and a minor Back
+  button hit-testing inconsistency).
 
 ### Changed
 
+- Replaced the placeholder SF Symbol menu bar icon and default app icon with
+  FolderDrop's own custom icon.
 - Reorganized the About settings page into Links, License, Privacy, and
   Credits sections. GitHub Repository and Report an Issue now link to this
   project's real repository and issue tracker.

@@ -636,6 +636,40 @@ investigation.
 
 ---
 
+## Menu Bar & App Icon
+
+### Problem
+
+`MenuBarExtra` was still using a generic `systemImage: "folder"` SF Symbol,
+and the app icon was the Xcode-generated placeholder — neither gave
+FolderDrop a visual identity distinct from any other folder-themed utility
+or default new-project icon.
+
+### Solution
+
+Added a custom app icon (`AppIcon.appiconset`, full size set from 16×16
+through 1024×1024) and a dedicated template menu bar icon (`MenuIcon.imageset`,
+a single-color PDF vector so AppKit can recolor it correctly for light/dark
+menu bar appearance and states, the same way system menu bar icons behave).
+`FolderDropApp`'s `MenuBarExtra` was switched from
+`systemImage: "folder"` to `image: "MenuIcon"` to use it.
+
+### Files Changed
+
+`FolderDrop/FolderDropApp.swift`,
+`FolderDrop/Assets.xcassets/AppIcon.appiconset/` (new),
+`FolderDrop/Assets.xcassets/MenuIcon.imageset/` (new),
+`FolderDrop/FolderDropIcon.icon/` (new)
+
+### Outcome
+
+FolderDrop shows its own icon in the Dock/Finder/About page and its own
+glyph in the menu bar, instead of a generic system symbol or the default
+Xcode project icon. No behavior changed — this was a visual-identity-only
+pass.
+
+---
+
 ## Live Folder Refresh
 
 ### Problem
@@ -1049,3 +1083,50 @@ not just reading the code) that the app icon, version, description, all
 Links rows, License, Privacy, Maintenance, and Credits render correctly in
 the existing native grouped-Form style. No other settings page or
 application behavior was touched.
+
+---
+
+## Known Limitations Documentation
+
+### Problem
+
+The Pre-Release Security & Privacy Audit and general documentation passes
+had covered what FolderDrop *does*, but nothing in the repository told a
+user or contributor, in one place, what currently *doesn't* work correctly
+— fullscreen Quick Look focus loss, the DaVinci Resolve drag-staging issue,
+unsupported folder dragging, alphabetical-only sorting, and the Settings
+window's fullscreen-Space behavior were each either undocumented or only
+described in passing elsewhere.
+
+### Solution
+
+Added a user-facing **Known Limitations** section to the README (one
+concise bullet per limitation) and a new `docs/known-limitations.md` with a
+full Description / Current behavior / Expected behavior / Workaround /
+Status / Notes writeup for each one — deliberately distinct in scope from
+`docs/roadmap.md`'s own, pre-existing "Known Limitations" section, which
+lists features that don't exist yet rather than bugs in features that do.
+Both documents were cross-linked in both directions so a reader landing on
+either one can find the other, and `.github/ISSUE_TEMPLATE/bug_report.md`
+was updated to point bug reporters at both before filing a new issue.
+
+The DaVinci Resolve entry's Status (`Under Investigation`) and Notes
+section reflect a real root-cause investigation into FolderDrop's
+`NSItemProvider`/pasteboard drag registrations — summarized honestly as
+unresolved rather than presented with a fix that hasn't actually landed. An
+experiment that pointed the shared `registerObject` representation at the
+original file fixed DaVinci Resolve but broke Finder, Chrome, Figma, and
+multi-file drag, and was reverted; no fix is scheduled until the mechanism
+is better understood.
+
+### Files Changed
+
+`README.md`, `docs/known-limitations.md` (new), `docs/roadmap.md`,
+`.github/ISSUE_TEMPLATE/bug_report.md`
+
+### Outcome
+
+Every currently-known bug has one canonical, honest description that both
+the README and `docs/roadmap.md` link to, instead of being scattered across
+conversations or left completely undocumented. No source code was changed
+in this phase — it is documentation only.

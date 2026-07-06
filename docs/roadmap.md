@@ -8,56 +8,9 @@ For why the architecture looks the way it does, see
 
 ---
 
-## RC1 Polish
+## Version 1.0
 
-Work remaining before the first public release candidate:
-
-- [ ] Prebuilt, signed, notarized release build (see
-      [release-process.md](release-process.md))
-- [ ] Real screenshots and a hero GIF for the README
-- [x] `CONTRIBUTING.md`, `CHANGELOG.md`, and issue/PR templates finalized
-- [x] Pre-release security & privacy audit, including a full git-history
-      review for secrets and personal information
-- [x] Adopt a project-owned bundle identifier (`com.folderdrop.app`) ahead
-      of release
-- [ ] Continued UI polish passes, as needed (treated as an ongoing,
-      incremental effort rather than a one-time pass)
-
----
-
-## Version 1.1
-
-- [ ] Wire "Check for Updates" to a real updater (Sparkle or equivalent)
-- [ ] Search/filter within the current folder's contents
-- [ ] Homebrew Cask formula
-
----
-
-## Version 1.2
-
-- [ ] Finder Sync extension for deeper Finder integration
-- [ ] Custom/remappable keyboard shortcuts (would extend the single
-      centralized `NSEvent` monitor's key-mapping rather than replace it)
-- [ ] Richer previews beyond what Quick Look provides by default
-- [ ] Performance work if folder sizes/entry counts grow significantly
-      (`FolderContentsLoader` and `SelectionState` have not been built or
-      tested against very large directories)
-
----
-
-## Long-Term Ideas
-
-Not scheduled — directional ideas only:
-
-- App Store release (would require revisiting the sandbox/entitlement setup
-  and the security-scoped bookmark strategy for App Store compliance)
-- Drag-and-drop *into* FolderDrop (currently entirely outbound)
-- Folder favorites/pinning and reordering
-- Multi-window support (currently one menu bar panel, one Settings window)
-
----
-
-## Completed Features
+### Completed
 
 Everything below is implemented and shipping today. See
 [implementation-history.md](implementation-history.md) for how each one was
@@ -85,8 +38,14 @@ built.
   ⌘⇧A)
 - Finder-style multi-selection (plain/⌘/⇧-click, ⇧-arrow, independent of
   drag/Quick Look/keyboard state)
+- Native file icons via `NSWorkspace`, matching what Finder shows for every
+  registered macOS file type
+- Custom app and menu bar icon (replacing the placeholder SF Symbol used
+  during early development)
 - Hover and selection visuals using native semantic AppKit colors
 - Populated empty states with subtle navigation-state fade transitions
+- Duplicate-folder feedback (an audible beep when re-adding an existing root
+  folder, instead of doing nothing silently)
 - Native Settings window (⌘, or the header gear icon), split into General,
   Hotkeys, and About pages:
   - Launch at Login (via `SMAppService`)
@@ -98,6 +57,75 @@ built.
   - Check for Updates (placeholder)
   - About page with working GitHub Repository and Report an Issue links,
     plus License, Privacy, and Credits sections
+- Pre-release security & privacy audit, including a full git-history review
+  for secrets and personal information
+- Project-owned bundle identifier (`com.folderdrop.app`)
+- `CONTRIBUTING.md`, `CHANGELOG.md`, issue/PR templates, and a documented
+  Known Limitations list (see [known-limitations.md](known-limitations.md))
+
+### Remaining Before Release
+
+- [ ] Real screenshots and a hero GIF for the README
+- [ ] Signed, notarized release build — currently undecided; see
+      [release-process.md](release-process.md) and the sandbox item under
+      Version 1.1 below
+- [ ] Continued UI polish passes, as needed (treated as an ongoing,
+      incremental effort rather than a one-time pass)
+
+---
+
+## Version 1.0.1
+
+Reserved for critical bug fixes only, if any are found after v1.0 ships. No
+release-blocking issues are currently known — see
+[known-limitations.md](known-limitations.md) for existing, non-blocking bugs
+already being tracked for a later version.
+
+---
+
+## Version 1.1
+
+Planned improvements, not yet started unless noted otherwise:
+
+- [ ] Investigate a non-sandbox architecture for direct/GitHub distribution
+      to simplify drag & drop and file access. **Under investigation —
+      not a decision to remove App Sandbox**; see
+      [known-limitations.md](known-limitations.md#drag--drop-davinci-resolve)
+      for the drag-and-drop issue driving this investigation.
+- [ ] Rework drag & drop architecture to better match Finder's file-reference
+      behavior
+- [ ] Folder drag & drop support (currently files only)
+- [ ] Sorting options (date modified, size, kind, etc. — currently
+      alphabetical only)
+- [ ] Improved Quick Look behavior (fullscreen focus-restoration edge case)
+- [ ] Wire "Check for Updates" to a real updater (Sparkle or equivalent)
+- [ ] Search/filter within the current folder's contents
+- [ ] Homebrew Cask formula
+- [ ] Additional quality-of-life improvements, as they come up
+
+---
+
+## Version 1.2
+
+- [ ] Finder Sync extension for deeper Finder integration
+- [ ] Custom/remappable keyboard shortcuts (would extend the single
+      centralized `NSEvent` monitor's key-mapping rather than replace it)
+- [ ] Richer previews beyond what Quick Look provides by default
+- [ ] Performance work if folder sizes/entry counts grow significantly
+      (`FolderContentsLoader` and `SelectionState` have not been built or
+      tested against very large directories)
+
+---
+
+## Long-Term Ideas
+
+Not scheduled — directional ideas only:
+
+- App Store release (would require revisiting the sandbox/entitlement setup
+  and the security-scoped bookmark strategy for App Store compliance)
+- Drag-and-drop *into* FolderDrop (currently entirely outbound)
+- Folder favorites/pinning and reordering
+- Multi-window support (currently one menu bar panel, one Settings window)
 
 ---
 

@@ -36,10 +36,12 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 
 - [x] Multiple root folders
 - [x] Folder navigation with back/breadcrumb support
+- [x] Root folder context menu (Open, Reveal in Finder, Remove)
 - [x] Native Quick Look preview (single file or multi-selection)
 - [x] Native drag & drop (single and multi-file, to Finder, Mail, Chrome, Slack, VS Code, and more)
 - [x] Finder-style multi-selection (click, ⌘-click, ⇧-click/⇧-arrow)
 - [x] Full keyboard navigation
+- [x] Native file icons (matches what Finder shows for every file type)
 - [x] Live folder refresh (auto-updates when files change on disk)
 - [x] Automatic cleanup when a root folder is deleted or becomes unavailable
 - [x] Launch at Login
@@ -148,7 +150,8 @@ xcodebuild -project FolderDrop.xcodeproj -scheme FolderDrop -configuration Debug
 |---|---|
 | `↑` `↓` | Navigate |
 | `⇧` + `↑` `↓` | Extend selection |
-| `⌘` + Click | Multi-select |
+| `⌘` + Click | Multi-select (toggle) |
+| `⇧` + Click | Extend selection (range) |
 | `⌘A` | Select all |
 | `⌘⇧A` | Deselect all |
 | `Esc` | Back |
@@ -176,7 +179,12 @@ For a deeper explanation of *why* the architecture looks like this — MenuBarEx
 
 ## Roadmap
 
-**Coming Soon**
+**Version 1.1 (planned)**
+- Investigate a non-sandbox architecture for direct/GitHub distribution to simplify drag & drop and file access (under investigation, not decided — see [docs/known-limitations.md](docs/known-limitations.md))
+- Rework drag & drop to better match Finder's file-reference behavior
+- Folder drag & drop support
+- Sorting options (date modified, size, kind, etc.)
+- Improved Quick Look behavior (fullscreen focus restoration)
 - Wire "Check for Updates" to a real updater
 - Search/filter within the current folder
 
@@ -185,7 +193,7 @@ For a deeper explanation of *why* the architecture looks like this — MenuBarEx
 - Custom/remappable keyboard shortcuts
 - Folder favorites/pinning
 
-Full details, including completed work, live in **[docs/roadmap.md](docs/roadmap.md)**.
+Full details, including completed work and version-by-version breakdown, live in **[docs/roadmap.md](docs/roadmap.md)**.
 
 ---
 
@@ -205,6 +213,9 @@ Full details, including completed work, live in **[docs/roadmap.md](docs/roadmap
 
 - **Settings Window**
   - The Settings window currently opens in its own desktop/Space instead of the active fullscreen Space due to SwiftUI/AppKit limitations.
+
+- **Back Button**
+  - Minor inconsistency in the Back button's hit-testing near the top edge of its clickable area.
 
 These limitations are tracked for future releases and do not affect the core functionality of FolderDrop. See **[docs/known-limitations.md](docs/known-limitations.md)** for more detail on each item. For features that haven't been built yet, see the [Roadmap](#roadmap)'s own [Known Limitations](docs/roadmap.md#known-limitations) list.
 

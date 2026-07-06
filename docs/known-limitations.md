@@ -132,3 +132,26 @@ back to the Space containing the fullscreen app afterward.
 **Notes:** This stems from how SwiftUI's `Settings` scene and AppKit's
 fullscreen Space management interact; not something FolderDrop's own code
 directly controls.
+
+---
+
+## Back Button Hit-Testing
+
+**Description:** Minor inconsistency in the Back button's hit-testing near
+the top edge of its clickable area.
+
+**Current behavior:** A click very close to the top edge of the Back
+button's hit area can occasionally fail to register.
+
+**Expected behavior:** The entire visible/hover-highlighted area of the Back
+button should register a click consistently, with no edge inconsistency.
+
+**Workaround:** Click closer to the center of the button.
+
+**Status:** Planned
+
+**Notes:** A related hover/click hit-testing mismatch for this same button
+was previously fixed (see
+[implementation-history.md](implementation-history.md#root-folder-lifecycle--rc1-stability))
+by aligning `contentShape` and `.onHover` on the same view node. This is a
+narrower, residual edge case in the same area, not a regression of that fix.
