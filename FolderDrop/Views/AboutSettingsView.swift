@@ -26,10 +26,10 @@ struct AboutSettingsView: View {
     @AppStorage(SettingsKeys.dragCleanupDelaySeconds) private var cleanupDelay: CleanupDelay = .sixty
 
     @State private var showsRestoreDefaultsConfirmation = false
-    @State private var showsUpToDateAlert = false
 
     private static let repositoryURL = URL(string: "https://github.com/Shreyank67/FolderDrop")!
     private static let issuesURL = URL(string: "https://github.com/Shreyank67/FolderDrop/issues/new/choose")!
+    private static let releasesURL = URL(string: "https://github.com/Shreyank67/FolderDrop/releases")!
 
     var body: some View {
         Form {
@@ -74,8 +74,10 @@ struct AboutSettingsView: View {
             }
 
             Section("Maintenance") {
-                Button("Check for Updates…") {
-                    showsUpToDateAlert = true
+                Button {
+                    NSWorkspace.shared.open(Self.releasesURL)
+                } label: {
+                    Label("View Latest Release", systemImage: "arrow.up.forward.app")
                 }
                 Button("Restore Defaults…") {
                     showsRestoreDefaultsConfirmation = true
@@ -94,13 +96,16 @@ struct AboutSettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+
+            Section {
+                Button {
+                    NSApp.terminate(nil)
+                } label: {
+                    Label("Quit FolderDrop", systemImage: "power")
+                }
+            }
         }
         .formStyle(.grouped)
-        .alert("You're up to date", isPresented: $showsUpToDateAlert) {
-            Button("OK") {}
-        } message: {
-            Text("You're running the latest version of FolderDrop.")
-        }
         .confirmationDialog(
             "Restore Defaults?",
             isPresented: $showsRestoreDefaultsConfirmation,
