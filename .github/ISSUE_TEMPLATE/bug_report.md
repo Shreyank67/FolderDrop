@@ -40,4 +40,5 @@ intermittently, or console output if you have any.
 ---
 
 Before submitting, please check [docs/roadmap.md](../../docs/roadmap.md#known-limitations)
-to confirm this isn't already a documented limitation.
+(unbuilt features) and [docs/known-limitations.md](../../docs/known-limitations.md)
+(known bugs in existing behavior) to confirm this isn't already documented.

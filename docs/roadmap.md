@@ -103,6 +103,9 @@ built.
 
 ## Known Limitations
 
+Features that don't exist yet. For bugs in behavior that *is* implemented, see
+[docs/known-limitations.md](known-limitations.md).
+
 - No search or filtering within a folder's contents
 - No Finder Sync extension (badges/context menu integration inside Finder
   itself)

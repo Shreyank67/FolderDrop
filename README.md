@@ -24,6 +24,7 @@ FolderDrop lives in your menu bar and gives you instant access to the folders yo
 - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Project Structure](#project-structure)
 - [Roadmap](#roadmap)
+- [Known Limitations](#known-limitations)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
 - [Credits](#credits)
@@ -185,6 +186,27 @@ For a deeper explanation of *why* the architecture looks like this — MenuBarEx
 - Folder favorites/pinning
 
 Full details, including completed work, live in **[docs/roadmap.md](docs/roadmap.md)**.
+
+---
+
+## Known Limitations
+
+- **Quick Look**
+  - In some fullscreen applications (for example, Figma), Quick Look may occasionally lose keyboard focus when closing with the Space key. This does not affect normal desktop usage.
+
+- **Drag & Drop**
+  - Some applications (currently confirmed with DaVinci Resolve) import the temporary staged file path instead of the original file location. This can cause broken references after FolderDrop cleans up its temporary drag files.
+
+- **Folder Drag & Drop**
+  - Dragging folders is not currently supported. Only files can be dragged.
+
+- **Sorting**
+  - Folder contents are currently displayed alphabetically. Additional sorting options (date modified, size, etc.) are planned for a future release.
+
+- **Settings Window**
+  - The Settings window currently opens in its own desktop/Space instead of the active fullscreen Space due to SwiftUI/AppKit limitations.
+
+These limitations are tracked for future releases and do not affect the core functionality of FolderDrop. See **[docs/known-limitations.md](docs/known-limitations.md)** for more detail on each item. For features that haven't been built yet, see the [Roadmap](#roadmap)'s own [Known Limitations](docs/roadmap.md#known-limitations) list.
 
 ---
 
