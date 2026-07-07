@@ -146,7 +146,7 @@ button's hit area can occasionally fail to register.
 **Expected behavior:** The entire visible/hover-highlighted area of the Back
 button should register a click consistently, with no edge inconsistency.
 
-**Workaround:** Click closer to the center of the button.
+**Workaround:** Click closer to the center of the button. (Or use "esc", it's way better).
 
 **Status:** Planned
 

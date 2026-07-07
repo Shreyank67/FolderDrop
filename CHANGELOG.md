@@ -25,6 +25,10 @@ the way — see [docs/implementation-history.md](docs/implementation-history.md)
 - A "Quit FolderDrop" action on the About settings page — previously the
   only way to quit was Force Quit / Activity Monitor, since MenuBarExtra
   apps have no menu-bar-driven Cmd-Q to fall back on.
+- A hero demo video (linked via a clickable YouTube thumbnail, plus a plain
+  YouTube link underneath for anyone who doesn't click the thumbnail image)
+  and real screenshots for every entry in the README's Screenshots section,
+  replacing the placeholder GIF note and screenshot comments.
 
 ### Changed
 

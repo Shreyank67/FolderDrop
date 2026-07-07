@@ -1175,3 +1175,51 @@ honest about being a manual link, and automatic update checking (Sparkle or
 equivalent) remains tracked as unstarted work in
 [roadmap.md](roadmap.md#version-11). Verified with a full Debug build
 (`xcodebuild`); no other view or application behavior was touched.
+
+---
+
+## Hero Demo Video & Real Screenshots
+
+### Problem
+
+The README's hero section and Screenshots section had been placeholders
+since the Open-Source Documentation Overhaul — a `<!-- HERO GIF HERE -->`
+comment with notes on what a future GIF should show, and seven
+`<!-- Screenshot: ... -->` comments with no images behind them. A recorded
+demo existed, but at ~56 seconds it was far too long to convert into a GIF
+without an impractically large file for the repository.
+
+### Solution
+
+**Hero video.** Rather than a GIF, the demo was uploaded to YouTube and
+embedded the only way a real video player can appear on a GitHub-rendered
+README — GitHub strips `<iframe>`/`<script>` tags, so there's no way to get
+an actual inline player. Instead, the placeholder was replaced with a
+clickable thumbnail image
+(`[![...](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](youtube-url)`),
+using YouTube's own thumbnail CDN rather than a hosted image, plus a plain
+YouTube link underneath for anyone who doesn't click the image itself. The
+`maxresdefault` thumbnail size was confirmed to actually exist for this
+video before using it, since not every video has one generated.
+
+**Screenshots.** Nine screenshots (more than the original seven
+placeholders — About and Quick Look each needed two, since About now covers
+more ground with the Quit/View Latest Release additions, and Quick Look
+supports both single-file and full multi-selection previews) were added
+under `docs/assets/images/` and wired into the Screenshots section with
+real Markdown image tags, replacing every HTML comment placeholder.
+
+### Files Changed
+
+`README.md`, `docs/assets/images/` (new: `empty-state.png`,
+`root-folders.png`, `folder-contents.png`, `settings-general.png`,
+`settings-hotkeys.png`, `settings-about-1.png`, `settings-about-2.png`,
+`quicklook-single.png`, `quicklook-multi.png`), `docs/roadmap.md`
+
+### Outcome
+
+The README no longer has any placeholder asset sections — every screenshot
+slot has a real image, and the hero section links to an actual demo video
+instead of describing a GIF that was never recorded. `docs/roadmap.md`'s
+"Remaining Before Release" items for the hero visual and screenshots are
+both checked off.

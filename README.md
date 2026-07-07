@@ -4,13 +4,11 @@ A native macOS menu bar app for browsing, previewing, and dragging files without
 
 FolderDrop lives in your menu bar and gives you instant access to the folders you use most — browse into subfolders, preview files with Quick Look, drag files straight into other apps, and jump around entirely from the keyboard. It's built for anyone who reaches for a handful of the same folders dozens of times a day and doesn't want a full Finder window every time. FolderDrop is free and open source, built natively with SwiftUI and AppKit.
 
-<!-- HERO GIF HERE -->
+[![FolderDrop Demo](https://img.youtube.com/vi/szUlrb25cSE/maxresdefault.jpg)](https://www.youtube.com/watch?v=szUlrb25cSE)
 
-*Add a GIF showing:*
-- *opening FolderDrop*
-- *navigating folders*
-- *Quick Look*
-- *drag & drop*
+*Click the thumbnail above to watch a full demo on YouTube — opening FolderDrop, navigating folders, Quick Look, and drag & drop.*
+
+📺 YouTube: [https://www.youtube.com/watch?v=szUlrb25cSE](https://www.youtube.com/watch?v=szUlrb25cSE)
 
 ---
 
@@ -72,33 +70,38 @@ See [docs/architecture.md](docs/architecture.md) for how folder access and persi
 
 ## Screenshots
 
-<!-- Screenshot: Empty State -->
+![Empty State](docs/assets/images/empty-state.png)
 
-*Description: The onboarding screen shown when no root folders have been added yet.*
+*The onboarding screen shown when no root folders have been added yet.*
 
-<!-- Screenshot: Root Folders -->
+![Root Folders](docs/assets/images/root-folders.png)
 
-*Description: The top-level list of root folders added to FolderDrop.*
+*The top-level list of root folders added to FolderDrop.*
 
-<!-- Screenshot: Folder Contents -->
+![Folder Contents](docs/assets/images/folder-contents.png)
 
-*Description: Browsing inside a folder, showing files and subfolders with native icons.*
+*Browsing inside a folder, showing files and subfolders with native icons.*
 
-<!-- Screenshot: Settings — General -->
+![Settings — General](docs/assets/images/settings-general.png)
 
-*Description: The General settings page — Launch at Login, Quick Look, restore last folder, drag cleanup delay.*
+*The General settings page — Launch at Login, Quick Look, restore last folder, drag cleanup delay.*
 
-<!-- Screenshot: Settings — Hotkeys -->
+![Settings — Hotkeys](docs/assets/images/settings-hotkeys.png)
 
-*Description: The Hotkeys settings page listing all keyboard shortcuts.*
+*The Hotkeys settings page listing all keyboard shortcuts.*
 
-<!-- Screenshot: Settings — About -->
+![Settings — About](docs/assets/images/settings-about-1.png)
+![Settings — About (continued)](docs/assets/images/settings-about-2.png)
 
-*Description: The About settings page — app info, project links, and maintenance actions.*
+*The About settings page — app info, project links, License/Privacy/Credits, and maintenance actions (View Latest Release, Restore Defaults, Quit).*
 
-<!-- Screenshot: Quick Look Preview -->
+![Quick Look — Single File](docs/assets/images/quicklook-single.png)
 
-*Description: Quick Look previewing a selected file directly from FolderDrop.*
+*Quick Look previewing a single selected file directly from FolderDrop.*
+
+![Quick Look — Multi-Selection](docs/assets/images/quicklook-multi.png)
+
+*Quick Look cycling through a full multi-selection.*
 
 ---
 

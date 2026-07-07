@@ -67,7 +67,8 @@ built.
 
 ### Remaining Before Release
 
-- [ ] Real screenshots and a hero GIF for the README
+- [x] Hero demo video for the README (linked via clickable YouTube thumbnail)
+- [x] Real screenshots for the README's Screenshots section
 - [ ] Signed, notarized release build — currently undecided; see
       [release-process.md](release-process.md) and the sandbox item under
       Version 1.1 below
