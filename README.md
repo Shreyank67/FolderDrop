@@ -1,12 +1,23 @@
-# FolderDrop
+<div align="center">
 
-A native macOS menu bar app for browsing, previewing, and dragging files without opening Finder.
+<img src="docs/assets/images/full-logo.png" width="200" alt="FolderDrop">
 
-FolderDrop lives in your menu bar and gives you instant access to the folders you use most — browse into subfolders, preview files with Quick Look, drag files straight into other apps, and jump around entirely from the keyboard. It's built for anyone who reaches for a handful of the same folders dozens of times a day and doesn't want a full Finder window every time. FolderDrop is free and open source, built natively with SwiftUI and AppKit.
+A free and open-source macOS menu bar app for quickly accessing, previewing, and dragging files from your frequently used folders.
+
+[![Latest Release](https://img.shields.io/github/v/release/Shreyank67/FolderDrop)](https://github.com/Shreyank67/FolderDrop/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-lightgrey)
+![Swift 6](https://img.shields.io/badge/Swift-6-orange)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-blue)
+![AppKit](https://img.shields.io/badge/AppKit-lightgrey)
+
+</div>
+
+---
 
 [![FolderDrop Demo](https://img.youtube.com/vi/szUlrb25cSE/maxresdefault.jpg)](https://www.youtube.com/watch?v=szUlrb25cSE)
 
-*Click the thumbnail above to watch a full demo on YouTube — opening FolderDrop, navigating folders, Quick Look, and drag & drop.*
+🎥 Watch the 56-second demo on YouTube to see FolderDrop in action.
 
 📺 YouTube: [https://www.youtube.com/watch?v=szUlrb25cSE](https://www.youtube.com/watch?v=szUlrb25cSE)
 
