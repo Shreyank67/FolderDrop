@@ -6,7 +6,7 @@ A free and open-source macOS menu bar app for quickly accessing, previewing, and
 
 [![Latest Release](https://img.shields.io/github/v/release/Shreyank67/FolderDrop)](https://github.com/Shreyank67/FolderDrop/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![macOS 26+](https://img.shields.io/badge/macOS-26%2B-lightgrey)
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-lightgrey)
 ![Swift 6](https://img.shields.io/badge/Swift-6-orange)
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-blue)
 ![AppKit](https://img.shields.io/badge/AppKit-lightgrey)
@@ -137,8 +137,8 @@ See [Building](#building) below.
 FolderDrop is a standard Xcode project — no external dependencies or package managers are involved.
 
 **Requirements:**
-- macOS 26 or later
-- Xcode 26 or later
+- macOS 14 or later (to run the built app; matches the project's deployment target)
+- Xcode 26 or later (to build)
 
 **Steps:**
 

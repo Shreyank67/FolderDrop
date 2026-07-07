@@ -26,8 +26,8 @@ FolderDrop has no external dependencies or package managers — it's a plain
 Xcode project.
 
 **Requirements:**
-- macOS 26 or later
-- Xcode 26 or later
+- macOS 14 or later (to run the built app; matches the project's deployment target)
+- Xcode 26 or later (to build)
 
 **Setup:**
 
