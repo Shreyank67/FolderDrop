@@ -120,7 +120,9 @@ See [docs/architecture.md](docs/architecture.md) for how folder access and persi
 
 ### Download
 
-> Prebuilt release binaries aren't published yet. Check the [Releases](../../releases) page once the first tagged release is out.
+Grab the latest build (`FolderDrop_v1.0.0_macOS.zip`) from the [Releases](https://github.com/Shreyank67/FolderDrop/releases) page, unzip it, and move `FolderDrop.app` to `/Applications`.
+
+FolderDrop isn't code-signed or notarized yet, so macOS may block it on first launch with a message saying it can't verify the app is free of malware. If that happens: go to **System Settings → Privacy & Security**, scroll to the Security section, and click **Open Anyway** next to the FolderDrop warning, then confirm. You only need to do this once — the zip also includes an Installation Guide with the same steps.
 
 ### Build from Source
 
